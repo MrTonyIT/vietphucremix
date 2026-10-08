@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Thông tin hồ sơ người dùng lưu trữ qua Google Authentication",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID người dùng từ Firebase Authentication" },
+        "displayName": { "type": "string", "description": "Họ và tên người dùng", "maxLength": 120 },
+        "email": { "type": "string", "description": "Địa chỉ email người dùng", "maxLength": 120 },
+        "photoURL": { "type": "string", "description": "Đường dẫn ảnh đại diện Google", "maxLength": 500 },
+        "createdAt": { "type": "string", "description": "Thời điểm khởi tạo tài khoản" }
+      },
+      "required": ["userId", "email"]
+    },
+    "LookbookOutfit": {
+      "title": "LookbookOutfit",
+      "description": "Bộ phối Việt Phục Remix được người dùng lưu trữ vào Lookbook cá nhân",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Mã định danh duy nhất của bộ phối" },
+        "userId": { "type": "string", "description": "Mã UID của người sở hữu" },
+        "name": { "type": "string", "description": "Tên bộ phối do người dùng đặt", "maxLength": 150 },
+        "entitySlug": { "type": "string", "description": "Nhóm áo: ao-dai, ngu-than, tu-than", "enum": ["ao-dai", "ngu-than", "tu-than"] },
+        "recipeId": { "type": "string", "description": "Mã công thức phối chuẩn", "maxLength": 80 },
+        "itemIds": { "type": "array", "description": "Danh sách các mã món đồ trong bộ phối" },
+        "sceneId": { "type": "string", "description": "Mã bối cảnh không gian chụp ảnh", "maxLength": 80 },
+        "sceneName": { "type": "string", "description": "Tên bối cảnh không gian", "maxLength": 120 },
+        "colorHarmony": { "type": "string", "description": "Hài hòa màu sắc của bộ phối", "maxLength": 150 },
+        "savedAt": { "type": "string", "description": "Thời điểm lưu bộ đồ" }
+      },
+      "required": ["id", "userId", "name", "entitySlug", "itemIds"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Hồ sơ cá nhân của người dùng đăng nhập bằng Google Auth"
+    },
+    "/users/{userId}/lookbooks/{lookbookId}": {
+      "schema": "LookbookOutfit",
+      "description": "Bộ sưu tập Lookbook cá nhân lưu trữ trên đám mây"
+    }
+  }
+}

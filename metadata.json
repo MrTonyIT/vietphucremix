@@ -1,0 +1,6 @@
+{
+  "name": "Việt Phục Remix",
+  "description": "Nền tảng phối đồ thời trang Việt phục truyền thống kết hợp phong cách đương đại cho học sinh, sinh viên.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

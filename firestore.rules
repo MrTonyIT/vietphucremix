@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'email'])
+        && data.keys().hasOnly(['userId', 'email', 'displayName', 'photoURL', 'createdAt'])
+        && data.userId == request.auth.uid
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 120
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 60));
+    }
+
+    function isValidLookbook(data, userId, lookbookId) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'entitySlug', 'itemIds'])
+        && data.keys().hasOnly(['id', 'userId', 'name', 'entitySlug', 'recipeId', 'itemIds', 'sceneId', 'sceneName', 'colorHarmony', 'savedAt'])
+        && data.userId == request.auth.uid
+        && data.userId == userId
+        && data.id == lookbookId
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && (data.entitySlug == 'ao-dai' || data.entitySlug == 'ngu-than' || data.entitySlug == 'tu-than')
+        && data.itemIds is list && data.itemIds.size() > 0 && data.itemIds.size() <= 12
+        && data.itemIds[0] is string
+        && (!('recipeId' in data) || (data.recipeId is string && data.recipeId.size() <= 80))
+        && (!('sceneId' in data) || (data.sceneId is string && data.sceneId.size() <= 80))
+        && (!('sceneName' in data) || (data.sceneName is string && data.sceneName.size() <= 120))
+        && (!('colorHarmony' in data) || (data.colorHarmony is string && data.colorHarmony.size() <= 150))
+        && (!('savedAt' in data) || (data.savedAt is string && data.savedAt.size() <= 60));
+    }
+
+    // User Profile: Isolated to owner
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Blanket user profile reading is strictly blocked
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming())
+                    && incoming().userId == existing().userId;
+      allow delete: if false;
+
+      // Personal Lookbook Outfits subcollection
+      match /lookbooks/{lookbookId} {
+        allow get: if isOwner(userId) && isValidId(lookbookId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(lookbookId) && isValidLookbook(incoming(), userId, lookbookId);
+        allow update: if isOwner(userId) && isValidId(lookbookId) && isValidLookbook(incoming(), userId, lookbookId)
+                      && incoming().userId == existing().userId
+                      && incoming().id == existing().id;
+        allow delete: if isOwner(userId) && isValidId(lookbookId);
+      }
+    }
+  }
+}
