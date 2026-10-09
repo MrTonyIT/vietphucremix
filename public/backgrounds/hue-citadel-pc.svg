@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+  <defs>
+    <linearGradient id="hueSky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#140b08" />
+      <stop offset="35%" stopColor="#2c140e" />
+      <stop offset="70%" stopColor="#4a1d12" />
+      <stop offset="100%" stopColor="#180b06" />
+    </linearGradient>
+    <radialGradient id="royalSun" cx="50%" cy="32%" r="45%">
+      <stop offset="0%" stopColor="#ffda79" stopOpacity="0.85" />
+      <stop offset="25%" stopColor="#d4af37" stopOpacity="0.4" />
+      <stop offset="60%" stopColor="#b84034" stopOpacity="0.15" />
+      <stop offset="100%" stopColor="#140b08" stopOpacity="0" />
+    </radialGradient>
+    <linearGradient id="goldRoof" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#f59e0b" />
+      <stop offset="50%" stopColor="#b45309" />
+      <stop offset="100%" stopColor="#78350f" />
+    </linearGradient>
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#1c110b" stopOpacity="0.85" />
+      <stop offset="40%" stopColor="#3d1b12" stopOpacity="0.9" />
+      <stop offset="100%" stopColor="#0d0805" />
+    </linearGradient>
+    <filter id="royalGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Bầu trời hoàng hôn Cố Đô -->
+  <rect width="1920" height="1080" fill="url(#hueSky)" />
+  <circle cx="960" cy="340" r="320" fill="url(#royalSun)" />
+  <circle cx="960" cy="340" r="68" fill="#fff5d6" fill-opacity="0.95" filter="url(#royalGlow)" />
+
+  <!-- Dãy núi Ngự Bình xa xa bảng lảng trong sương tím -->
+  <path d="M-100,520 Q240,430 580,480 Q920,390 1340,460 Q1680,410 2020,500 L2020,720 L-100,720 Z" fill="#20110d" fill-opacity="0.75" />
+  <path d="M-50,560 Q380,490 760,530 Q1180,470 1560,520 Q1820,490 2000,550 L2000,750 L-50,750 Z" fill="#2d1510" fill-opacity="0.85" />
+
+  <!-- Dải mây cung đình uốn lượn phong cách triều Nguyễn -->
+  <path d="M120,260 C260,220 380,300 520,250 C640,210 740,280 860,240" stroke="#d4af37" stroke-width="2" stroke-opacity="0.35" fill="none" />
+  <path d="M1060,240 C1180,280 1300,210 1440,260 C1560,300 1680,230 1820,270" stroke="#d4af37" stroke-width="2" stroke-opacity="0.35" fill="none" />
+
+  <!-- Kiến trúc Cung Đình Hoàng Thành Huế - Ngọ Môn & Lầu Ngũ Phụng -->
+  <!-- Mái ngói hoàng lưu ly trung tâm -->
+  <g transform="translate(680, 360)">
+    <!-- Tầng trên lầu Ngũ Phụng -->
+    <path d="M280,0 Q200,60 80,75 L480,75 Q360,60 280,0 Z" fill="url(#goldRoof)" stroke="#fef08a" stroke-width="1.5" />
+    <rect x="140" y="75" width="280" height="40" fill="#1f110c" stroke="#d4af37" stroke-width="1" />
+    <!-- Hàng cột gỗ lim đỏ son tầng trên -->
+    <rect x="160" y="75" width="8" height="40" fill="#991b1b" />
+    <rect x="220" y="75" width="8" height="40" fill="#991b1b" />
+    <rect x="276" y="75" width="8" height="40" fill="#991b1b" />
+    <rect x="332" y="75" width="8" height="40" fill="#991b1b" />
+    <rect x="392" y="75" width="8" height="40" fill="#991b1b" />
+
+    <!-- Tầng mái lớn dưới -->
+    <path d="M280,105 Q120,180 -40,195 L600,195 Q440,180 280,105 Z" fill="url(#goldRoof)" stroke="#fef08a" stroke-width="2" />
+    <rect x="20" y="195" width="520" height="60" fill="#170c08" stroke="#d4af37" stroke-width="1.5" />
+
+    <!-- Cột son thếp vàng tầng dưới -->
+    <rect x="50" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+    <rect x="120" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+    <rect x="200" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+    <rect x="274" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+    <rect x="348" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+    <rect x="428" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+    <rect x="498" y="195" width="12" height="60" fill="#b91c1c" stroke="#f59e0b" stroke-width="0.75" />
+
+    <!-- Nền đài đá Ngọ Môn vững chãi với 3 vòm cửa -->
+    <path d="M-30,255 L590,255 L620,380 L-60,380 Z" fill="#261713" stroke="#78350f" stroke-width="2" />
+    <!-- Vòm cửa giữa dành cho Vua -->
+    <path d="M240,380 L240,310 Q280,285 320,310 L320,380 Z" fill="#0f0705" stroke="#f59e0b" stroke-width="1.5" />
+    <!-- Hai vòm cửa hai bên -->
+    <path d="M120,380 L120,330 Q150,310 180,330 L180,380 Z" fill="#0f0705" stroke="#ca8a04" stroke-width="1" />
+    <path d="M380,380 L380,330 Q410,310 440,330 L440,380 Z" fill="#0f0705" stroke="#ca8a04" stroke-width="1" />
+  </g>
+
+  <!-- Mái lầu cánh tả và cánh hữu đối xứng -->
+  <g transform="translate(180, 420)">
+    <path d="M140,0 Q60,50 -20,60 L300,60 Q220,50 140,0 Z" fill="url(#goldRoof)" stroke="#fef08a" stroke-width="1" />
+    <rect x="10" y="60" width="260" height="50" fill="#1b0f0b" stroke="#d4af37" stroke-width="1" />
+    <rect x="40" y="60" width="10" height="50" fill="#991b1b" />
+    <rect x="135" y="60" width="10" height="50" fill="#991b1b" />
+    <rect x="230" y="60" width="10" height="50" fill="#991b1b" />
+    <rect x="-10" y="110" width="300" height="180" fill="#241410" stroke="#78350f" stroke-width="1" />
+  </g>
+  <g transform="translate(1460, 420)">
+    <path d="M140,0 Q60,50 -20,60 L300,60 Q220,50 140,0 Z" fill="url(#goldRoof)" stroke="#fef08a" stroke-width="1" />
+    <rect x="10" y="60" width="260" height="50" fill="#1b0f0b" stroke="#d4af37" stroke-width="1" />
+    <rect x="40" y="60" width="10" height="50" fill="#991b1b" />
+    <rect x="135" y="60" width="10" height="50" fill="#991b1b" />
+    <rect x="230" y="60" width="10" height="50" fill="#991b1b" />
+    <rect x="-10" y="110" width="300" height="180" fill="#241410" stroke="#78350f" stroke-width="1" />
+  </g>
+
+  <!-- Mặt nước Sông Hương và hồ Thái Dịch êm đềm -->
+  <rect y="740" width="1920" height="340" fill="url(#riverGrad)" />
+
+  <!-- Ánh phản chiếu lung linh của lầu son gác tía trên sông -->
+  <ellipse cx="960" cy="820" rx="360" ry="16" fill="#f59e0b" fill-opacity="0.25" />
+  <ellipse cx="960" cy="870" rx="280" ry="12" fill="#d97706" fill-opacity="0.2" />
+  <ellipse cx="960" cy="940" rx="420" ry="18" fill="#b45309" fill-opacity="0.15" />
+
+  <!-- Khóm sen cung đình nở rộ hai bên bờ -->
+  <g transform="translate(80, 860) scale(1.4)">
+    <ellipse cx="50" cy="40" rx="60" ry="16" fill="#142918" fill-opacity="0.8" stroke="#10b981" stroke-width="1" stroke-opacity="0.4" />
+    <path d="M30,30 Q50,-10 70,30 Z" fill="#991b1b" fill-opacity="0.75" />
+    <path d="M40,30 Q50,0 60,30 Z" fill="#f43f5e" fill-opacity="0.85" />
+    <circle cx="50" cy="15" r="5" fill="#fef08a" />
+  </g>
+  <g transform="translate(1700, 860) scale(1.4)">
+    <ellipse cx="50" cy="40" rx="60" ry="16" fill="#142918" fill-opacity="0.8" stroke="#10b981" stroke-width="1" stroke-opacity="0.4" />
+    <path d="M30,30 Q50,-10 70,30 Z" fill="#991b1b" fill-opacity="0.75" />
+    <path d="M40,30 Q50,0 60,30 Z" fill="#f43f5e" fill-opacity="0.85" />
+    <circle cx="50" cy="15" r="5" fill="#fef08a" />
+  </g>
+
+  <!-- Dòng chỉ thêu hoàng kim chạy viền chân trang trọng -->
+  <line x1="0" y1="1060" x2="1920" y2="1060" stroke="#d4af37" stroke-width="1.5" stroke-opacity="0.5" />
+</svg>

@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
@@ -55,8 +56,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Enforce request body size limit to prevent payload floods
-app.use(express.json({ limit: '256kb' }));
+// Enforce request body size limit to allow background image uploads
+app.use(express.json({ limit: '15mb' }));
 
 const catalogMap = new Map<string, CatalogItem>(
   CATALOG_ITEMS.map((item) => [item.id, item])
@@ -308,6 +309,74 @@ app.get('/api/health', (req, res) => {
     totalRecipes: OUTFIT_RECIPES.length,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Phục vụ tĩnh toàn bộ ảnh nền trong public/backgrounds
+app.use('/backgrounds', express.static(path.resolve(__dirname, 'public/backgrounds')));
+
+// API: Tải lên và lưu vĩnh viễn hình nền cho toàn bộ người dùng
+app.post('/api/backgrounds/upload', (req, res) => {
+  try {
+    const { type, dataUrl } = req.body;
+    if (!type || !['pc', 'mobile'].includes(type) || !dataUrl) {
+      return res.status(400).json({ success: false, error: 'Thiếu type (pc/mobile) hoặc dataUrl' });
+    }
+
+    const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(400).json({ success: false, error: 'Định dạng ảnh không hợp lệ (yêu cầu data:image/...;base64,...)' });
+    }
+
+    const buffer = Buffer.from(matches[2], 'base64');
+    const fileName = `${type}-bg.png`;
+
+    // Lưu vào public/backgrounds
+    const publicDir = path.resolve(__dirname, 'public/backgrounds');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(publicDir, fileName), buffer);
+
+    // Đồng thời lưu vào dist/backgrounds nếu thư mục dist tồn tại
+    const distDir = path.resolve(__dirname, 'dist/backgrounds');
+    if (fs.existsSync(path.resolve(__dirname, 'dist'))) {
+      if (!fs.existsSync(distDir)) {
+        fs.mkdirSync(distDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(distDir, fileName), buffer);
+    }
+
+    res.json({
+      success: true,
+      message: `Đã lưu vĩnh viễn hình nền ${type.toUpperCase()} vào hệ thống cho TẤT CẢ người dùng!`,
+      url: `/backgrounds/${fileName}?v=${Date.now()}`,
+    });
+  } catch (error: any) {
+    console.error('[Việt Phục Remix] Lỗi lưu ảnh nền:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// API: Kiểm tra trạng thái ảnh nền toàn hệ thống
+app.get('/api/backgrounds', (req, res) => {
+  try {
+    const publicPc = path.resolve(__dirname, 'public/backgrounds/pc-bg.png');
+    const publicMobile = path.resolve(__dirname, 'public/backgrounds/mobile-bg.png');
+
+    // Kiểm tra file có tồn tại và không phải là file HTML lỗi (> 5KB)
+    const hasPc = fs.existsSync(publicPc) && fs.statSync(publicPc).size > 5000;
+    const hasMobile = fs.existsSync(publicMobile) && fs.statSync(publicMobile).size > 5000;
+
+    res.json({
+      success: true,
+      hasPc,
+      hasMobile,
+      pcUrl: hasPc ? `/backgrounds/pc-bg.png?v=${fs.statSync(publicPc).mtimeMs}` : null,
+      mobileUrl: hasMobile ? `/backgrounds/mobile-bg.png?v=${fs.statSync(publicMobile).mtimeMs}` : null,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // API: Get Catalog items (supports filtering by slot and entitySlug)
@@ -1700,10 +1769,17 @@ QUY TẮC BẮT BUỘC:
 });
 
 async function startServer() {
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+  const distPath = path.basename(__dirname) === 'dist'
+    ? __dirname
+    : path.resolve(__dirname, 'dist');
+  const hasDist = fs.existsSync(path.join(distPath, 'index.html'));
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isProduction = process.env.NODE_ENV === 'production' || (!isDevelopment && hasDist);
+
+  if (isProduction && hasDist) {
+    app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   } else {
     const { createServer: createViteServer } = await import('vite');
@@ -1719,10 +1795,12 @@ async function startServer() {
   });
 }
 
-// Don't auto-start server when imported by tests
-const isDirectExecution = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
-if (isDirectExecution && process.env.NODE_ENV !== 'test') {
-  startServer();
+// BỎ HẲN isDirectExecution — Luôn khởi động server trừ khi đang chạy test tự động
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch((err) => {
+    console.error('[Việt Phục Remix] Lỗi khởi động server:', err);
+    process.exit(1);
+  });
 }
 
 export { app, startServer };

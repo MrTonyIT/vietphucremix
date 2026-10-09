@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+  <defs>
+    <linearGradient id="hoianSky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#0a0812" />
+      <stop offset="30%" stopColor="#181226" />
+      <stop offset="65%" stopColor="#2c1a24" />
+      <stop offset="100%" stopColor="#120c0f" />
+    </linearGradient>
+    <radialGradient id="hoianMoon" cx="48%" cy="22%" r="40%">
+      <stop offset="0%" stopColor="#fff8e7" stopOpacity="0.9" />
+      <stop offset="25%" stopColor="#fde047" stopOpacity="0.3" />
+      <stop offset="60%" stopColor="#f97316" stopOpacity="0.1" />
+      <stop offset="100%" stopColor="#0a0812" stopOpacity="0" />
+    </radialGradient>
+    <linearGradient id="hoaiRiver" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#140d18" stopOpacity="0.8" />
+      <stop offset="45%" stopColor="#2e1422" stopOpacity="0.9" />
+      <stop offset="100%" stopColor="#080509" />
+    </linearGradient>
+  </defs>
+
+  <!-- Nền trời đêm phố Hội An ngàn sao và trăng rằm -->
+  <rect width="1920" height="1080" fill="url(#hoianSky)" />
+  <circle cx="920" cy="240" r="340" fill="url(#hoianMoon)" />
+  <circle cx="920" cy="240" r="54" fill="#fffdfa" fill-opacity="0.95" />
+
+  <!-- Dãy nhà cổ mái ngói âm dương rêu phong hai bên bờ sông Hoài -->
+  <!-- Bờ bên trái -->
+  <g transform="translate(-40, 380)">
+    <!-- Nhà cổ 1 -->
+    <polygon points="0,160 160,80 320,160" fill="#2d1d17" stroke="#b45309" stroke-width="1.5" />
+    <rect x="20" y="160" width="280" height="180" fill="#241410" stroke="#78350f" stroke-width="1" />
+    <!-- Tường vàng đặc trưng Hội An bị rêu phong phủ -->
+    <rect x="35" y="170" width="250" height="160" fill="#d97706" fill-opacity="0.25" />
+    <!-- Cửa gỗ bức bàn trầm ấm -->
+    <rect x="110" y="220" width="90" height="110" fill="#140a07" stroke="#f59e0b" stroke-width="1" />
+    <!-- Dàn hoa giấy rủ bóng -->
+    <path d="M40,150 Q160,110 280,140 Q220,190 60,170 Z" fill="#db2777" fill-opacity="0.55" />
+
+    <!-- Nhà cổ 2 vươn dài -->
+    <polygon points="300,180 500,90 700,180" fill="#382119" stroke="#b45309" stroke-width="1.5" />
+    <rect x="330" y="180" width="340" height="180" fill="#1e100c" />
+    <rect x="350" y="190" width="300" height="160" fill="#ca8a04" fill-opacity="0.2" />
+    <rect x="440" y="230" width="120" height="120" fill="#140a07" stroke="#f59e0b" stroke-width="1" />
+    <!-- Dàn hoa giấy tím thắm nở rộ trên ban công -->
+    <ellipse cx="500" cy="180" rx="140" ry="24" fill="#f43f5e" fill-opacity="0.6" />
+  </g>
+
+  <!-- Bờ bên phải (Đối xứng hài hòa) -->
+  <g transform="translate(1320, 390)">
+    <!-- Nhà cổ 3 -->
+    <polygon points="0,170 180,80 360,170" fill="#382119" stroke="#b45309" stroke-width="1.5" />
+    <rect x="30" y="170" width="300" height="180" fill="#1e100c" />
+    <rect x="50" y="180" width="260" height="160" fill="#d97706" fill-opacity="0.22" />
+    <rect x="120" y="220" width="110" height="120" fill="#140a07" stroke="#f59e0b" stroke-width="1" />
+    <ellipse cx="180" cy="165" rx="110" ry="20" fill="#ec4899" fill-opacity="0.6" />
+
+    <!-- Nhà cổ 4 -->
+    <polygon points="340,160 480,90 620,160" fill="#2d1d17" stroke="#b45309" stroke-width="1.5" />
+    <rect x="360" y="160" width="240" height="180" fill="#241410" />
+    <rect x="380" y="170" width="200" height="160" fill="#ca8a04" fill-opacity="0.25" />
+  </g>
+
+  <!-- Dây đèn lồng phố Hội giăng ngang lãng mạn -->
+  <path d="M100,320 Q480,440 960,360 Q1440,440 1820,320" stroke="#78350f" stroke-width="1.5" fill="none" />
+
+  <!-- Dãy đèn lồng ngũ sắc rực rỡ treo trên dây -->
+  <!-- Đèn đỏ tía -->
+  <g transform="translate(260, 375)">
+    <ellipse cx="0" cy="30" rx="22" ry="28" fill="#b91c1c" fill-opacity="0.9" stroke="#f59e0b" stroke-width="1" />
+    <circle cx="0" cy="30" r="10" fill="#fbbf24" />
+    <line x1="0" y1="58" x2="0" y2="90" stroke="#f59e0b" stroke-width="1.5" />
+  </g>
+  <!-- Đèn vàng hổ phách -->
+  <g transform="translate(420, 410)">
+    <ellipse cx="0" cy="28" rx="26" ry="24" fill="#d97706" fill-opacity="0.9" stroke="#fef08a" stroke-width="1" />
+    <circle cx="0" cy="28" r="12" fill="#fffbeb" />
+    <line x1="0" y1="52" x2="0" y2="84" stroke="#f59e0b" stroke-width="1.5" />
+  </g>
+  <!-- Đèn lục lam -->
+  <g transform="translate(620, 395)">
+    <ellipse cx="0" cy="30" rx="20" ry="26" fill="#047857" fill-opacity="0.9" stroke="#6ee7b7" stroke-width="1" />
+    <circle cx="0" cy="30" r="9" fill="#a7f3d0" />
+    <line x1="0" y1="56" x2="0" y2="88" stroke="#34d399" stroke-width="1.5" />
+  </g>
+  <!-- Đèn hồng cánh sen -->
+  <g transform="translate(800, 370)">
+    <ellipse cx="0" cy="28" rx="24" ry="25" fill="#be185d" fill-opacity="0.9" stroke="#fbcfe8" stroke-width="1" />
+    <circle cx="0" cy="28" r="11" fill="#fff1f2" />
+    <line x1="0" y1="53" x2="0" y2="85" stroke="#f472b6" stroke-width="1.5" />
+  </g>
+  <!-- Đèn tím hoàng gia -->
+  <g transform="translate(1120, 370)">
+    <ellipse cx="0" cy="28" rx="24" ry="25" fill="#6d28d9" fill-opacity="0.9" stroke="#e9d5ff" stroke-width="1" />
+    <circle cx="0" cy="28" r="11" fill="#faf5ff" />
+    <line x1="0" y1="53" x2="0" y2="85" stroke="#c084fc" stroke-width="1.5" />
+  </g>
+  <!-- Đèn vàng rực rỡ -->
+  <g transform="translate(1320, 400)">
+    <ellipse cx="0" cy="30" rx="22" ry="28" fill="#d97706" fill-opacity="0.9" stroke="#fde047" stroke-width="1" />
+    <circle cx="0" cy="30" r="10" fill="#fef08a" />
+    <line x1="0" y1="58" x2="0" y2="90" stroke="#f59e0b" stroke-width="1.5" />
+  </g>
+  <!-- Đèn đỏ chu sa -->
+  <g transform="translate(1520, 415)">
+    <ellipse cx="0" cy="28" rx="26" ry="24" fill="#b91c1c" fill-opacity="0.9" stroke="#fca5a5" stroke-width="1" />
+    <circle cx="0" cy="28" r="12" fill="#fef2f2" />
+    <line x1="0" y1="52" x2="0" y2="84" stroke="#f87171" stroke-width="1.5" />
+  </g>
+  <!-- Đèn xanh ngọc -->
+  <g transform="translate(1680, 375)">
+    <ellipse cx="0" cy="30" rx="20" ry="26" fill="#0284c7" fill-opacity="0.9" stroke="#bae6fd" stroke-width="1" />
+    <circle cx="0" cy="30" r="9" fill="#e0f2fe" />
+    <line x1="0" y1="56" x2="0" y2="88" stroke="#38bdf8" stroke-width="1.5" />
+  </g>
+
+  <!-- Dòng sông Hoài đêm rằm hoa đăng dập dềnh -->
+  <rect y="720" width="1920" height="360" fill="url(#hoaiRiver)" />
+
+  <!-- Ánh phản chiếu ánh đèn lồng trên mặt nước bồng bềnh -->
+  <ellipse cx="260" cy="840" rx="140" ry="12" fill="#b91c1c" fill-opacity="0.3" />
+  <ellipse cx="420" cy="890" rx="160" ry="14" fill="#d97706" fill-opacity="0.35" />
+  <ellipse cx="800" cy="830" rx="180" ry="14" fill="#be185d" fill-opacity="0.25" />
+  <ellipse cx="1120" cy="850" rx="170" ry="13" fill="#6d28d9" fill-opacity="0.25" />
+  <ellipse cx="1320" cy="900" rx="180" ry="15" fill="#d97706" fill-opacity="0.35" />
+  <ellipse cx="1520" cy="860" rx="150" ry="12" fill="#b91c1c" fill-opacity="0.3" />
+
+  <!-- Những đóa hoa đăng giấy thả trôi trên dòng sông -->
+  <g transform="translate(560, 880) scale(1.3)">
+    <polygon points="20,0 35,25 5,25" fill="#f43f5e" fill-opacity="0.8" />
+    <polygon points="20,5 30,25 10,25" fill="#fb7185" fill-opacity="0.9" />
+    <polygon points="5,25 35,25 28,34 12,34" fill="#e11d48" />
+    <circle cx="20" cy="18" r="4" fill="#fef08a" />
+    <!-- Vệt sáng quanh hoa đăng -->
+    <ellipse cx="20" cy="36" rx="26" ry="6" fill="#f43f5e" fill-opacity="0.4" />
+  </g>
+  <g transform="translate(940, 930) scale(1.5)">
+    <polygon points="20,0 35,25 5,25" fill="#f59e0b" fill-opacity="0.85" />
+    <polygon points="20,5 30,25 10,25" fill="#fde047" fill-opacity="0.95" />
+    <polygon points="5,25 35,25 28,34 12,34" fill="#d97706" />
+    <circle cx="20" cy="18" r="4" fill="#fffbeb" />
+    <ellipse cx="20" cy="36" rx="30" ry="7" fill="#f59e0b" fill-opacity="0.45" />
+  </g>
+  <g transform="translate(1380, 890) scale(1.2)">
+    <polygon points="20,0 35,25 5,25" fill="#a855f7" fill-opacity="0.8" />
+    <polygon points="20,5 30,25 10,25" fill="#c084fc" fill-opacity="0.9" />
+    <polygon points="5,25 35,25 28,34 12,34" fill="#7e22ce" />
+    <circle cx="20" cy="18" r="4" fill="#fef08a" />
+    <ellipse cx="20" cy="36" rx="24" ry="5" fill="#a855f7" fill-opacity="0.35" />
+  </g>
+
+  <!-- Chiếc thuyền nan chở người chèo đò thảnh thơi góc trái -->
+  <g transform="translate(180, 920)">
+    <path d="M0,30 Q80,50 180,30 L160,10 Q90,20 20,10 Z" fill="#1b100c" stroke="#b45309" stroke-width="1.5" />
+    <!-- Ngọn đèn dầu mũi thuyền -->
+    <circle cx="170" cy="8" r="5" fill="#fbbf24" />
+    <ellipse cx="170" cy="8" rx="14" ry="10" fill="#f59e0b" fill-opacity="0.4" />
+  </g>
+</svg>

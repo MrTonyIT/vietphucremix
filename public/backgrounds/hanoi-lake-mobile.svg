@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="100%" height="100%">
+  <defs>
+    <linearGradient id="hnSkyM" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#0d1117" />
+      <stop offset="25%" stopColor="#17222c" />
+      <stop offset="55%" stopColor="#222f28" />
+      <stop offset="85%" stopColor="#141c17" />
+      <stop offset="100%" stopColor="#0a0f0c" />
+    </linearGradient>
+    <radialGradient id="sunM2" cx="50%" cy="22%" r="40%">
+      <stop offset="0%" stopColor="#fef08a" stopOpacity="0.85" />
+      <stop offset="30%" stopColor="#f97316" stopOpacity="0.3" />
+      <stop offset="70%" stopColor="#b91c1c" stopOpacity="0.1" />
+      <stop offset="100%" stopColor="#0d1117" stopOpacity="0" />
+    </radialGradient>
+    <linearGradient id="redBridgeM" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#b91c1c" />
+      <stop offset="50%" stopColor="#ef4444" />
+      <stop offset="100%" stopColor="#991b1b" />
+    </linearGradient>
+  </defs>
+
+  <!-- Nền trời Hồ Gươm sương mai sớm tinh mơ -->
+  <rect width="1080" height="1920" fill="url(#hnSkyM)" />
+  <circle cx="540" cy="420" r="360" fill="url(#sunM2)" />
+  <circle cx="540" cy="380" r="62" fill="#fffef5" fill-opacity="0.9" />
+
+  <!-- Nhành liễu rủ xanh mát buông từ trên cao đỉnh màn hình -->
+  <g transform="translate(40, -40)">
+    <path d="M0,0 Q180,240 100,620" stroke="#10b981" stroke-width="2.5" stroke-opacity="0.4" fill="none" />
+    <path d="M80,0 Q320,300 180,740" stroke="#059669" stroke-width="3" stroke-opacity="0.45" fill="none" />
+    <path d="M160,0 Q400,340 260,820" stroke="#34d399" stroke-width="2" stroke-opacity="0.35" fill="none" />
+    <path d="M20,180 Q160,340 80,560 Q220,320 20,180 Z" fill="#064e3b" fill-opacity="0.35" />
+    <path d="M120,220 Q260,400 160,660 Q300,360 120,220 Z" fill="#047857" fill-opacity="0.3" />
+  </g>
+  <g transform="translate(1040, -40) scale(-1, 1)">
+    <path d="M0,0 Q180,240 100,620" stroke="#10b981" stroke-width="2.5" stroke-opacity="0.4" fill="none" />
+    <path d="M80,0 Q320,300 180,740" stroke="#059669" stroke-width="3" stroke-opacity="0.45" fill="none" />
+    <path d="M20,180 Q160,340 80,560 Q220,320 20,180 Z" fill="#064e3b" fill-opacity="0.35" />
+  </g>
+
+  <!-- Tháp Bút tả thanh thiên & Cổng Đền Ngọc Sơn -->
+  <g transform="translate(160, 560)">
+    <!-- Tháp Bút 5 tầng uy nghiêm -->
+    <rect x="30" y="40" width="40" height="260" fill="#292524" stroke="#ca8a04" stroke-width="1" />
+    <polygon points="50,0 30,40 70,40" fill="#44403c" stroke="#f59e0b" stroke-width="1.5" />
+    <!-- Chữ Tả Thanh Thiên tượng trưng -->
+    <rect x="42" y="80" width="16" height="40" fill="#78350f" />
+    <rect x="42" y="140" width="16" height="40" fill="#78350f" />
+    <rect x="42" y="200" width="16" height="40" fill="#78350f" />
+    <!-- Đế tháp Núi Độc Tôn -->
+    <polygon points="0,300 100,300 120,380 -20,380" fill="#1c1917" stroke="#78716c" stroke-width="1" />
+  </g>
+
+  <!-- Cầu Thê Húc son đỏ uốn cong bắc ngang chính diện -->
+  <g transform="translate(240, 840)">
+    <!-- Vòm cầu uốn cong kiêu hãnh -->
+    <path d="M0,180 Q300,-10 600,140" stroke="url(#redBridgeM)" stroke-width="18" fill="none" stroke-linecap="round" />
+    <!-- Lan can son đỏ -->
+    <path d="M0,160 Q300,-30 600,120" stroke="#fca5a5" stroke-width="3.5" fill="none" />
+    <!-- Trụ cầu màu gỗ son chôn sâu dưới hồ -->
+    <line x1="120" y1="120" x2="120" y2="280" stroke="#7f1d1d" stroke-width="6" />
+    <line x1="240" y1="70" x2="240" y2="290" stroke="#7f1d1d" stroke-width="6" />
+    <line x1="360" y1="65" x2="360" y2="290" stroke="#7f1d1d" stroke-width="6" />
+    <line x1="480" y1="105" x2="480" y2="280" stroke="#7f1d1d" stroke-width="6" />
+    <!-- Đèn lồng đỏ hai đầu cầu -->
+    <circle cx="20" cy="150" r="12" fill="#ef4444" stroke="#fbbf24" stroke-width="1.5" />
+    <circle cx="580" cy="115" r="12" fill="#ef4444" stroke="#fbbf24" stroke-width="1.5" />
+  </g>
+
+  <!-- Tháp Rùa cổ kính nổi bật xa xa trên gò đất -->
+  <g transform="translate(420, 640) scale(0.9)">
+    <rect x="75" y="0" width="50" height="35" fill="#2d281e" stroke="#ca8a04" stroke-width="1" />
+    <polygon points="70,0 130,0 100,-15" fill="#1a1813" stroke="#eab308" stroke-width="1" />
+    <rect x="40" y="35" width="120" height="55" fill="#383022" stroke="#ca8a04" stroke-width="1" />
+    <rect x="15" y="90" width="170" height="70" fill="#423927" stroke="#ca8a04" stroke-width="1.2" />
+    <ellipse cx="100" cy="170" rx="140" ry="24" fill="#162e20" stroke="#059669" stroke-width="1" />
+  </g>
+
+  <!-- Làn nước biếc Hồ Hoàn Kiếm phía dưới đáy màn hình -->
+  <rect y="1200" width="1080" height="720" fill="#09140f" />
+
+  <!-- Bóng cầu Thê Húc và ánh đèn phản chiếu lấp lánh trên sóng hồ -->
+  <ellipse cx="540" cy="1340" rx="380" ry="24" fill="#ef4444" fill-opacity="0.3" />
+  <ellipse cx="540" cy="1460" rx="420" ry="26" fill="#b91c1c" fill-opacity="0.25" />
+  <ellipse cx="540" cy="1620" rx="460" ry="28" fill="#ca8a04" fill-opacity="0.2" />
+  <ellipse cx="540" cy="1780" rx="500" ry="30" fill="#059669" fill-opacity="0.18" />
+
+  <!-- Lá sen rải rác ven bờ góc dưới -->
+  <g transform="translate(140, 1680) scale(1.6)">
+    <ellipse cx="30" cy="20" rx="42" ry="12" fill="#064e3b" fill-opacity="0.85" stroke="#10b981" stroke-width="1" />
+  </g>
+  <g transform="translate(820, 1720) scale(1.8)">
+    <ellipse cx="30" cy="20" rx="42" ry="12" fill="#064e3b" fill-opacity="0.85" stroke="#10b981" stroke-width="1" />
+  </g>
+</svg>

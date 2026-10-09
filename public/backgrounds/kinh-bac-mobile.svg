@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="100%" height="100%">
+  <defs>
+    <linearGradient id="kbSkyM" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#14100b" />
+      <stop offset="25%" stopColor="#291a10" />
+      <stop offset="55%" stopColor="#422515" />
+      <stop offset="85%" stopColor="#1f110a" />
+      <stop offset="100%" stopColor="#0f0805" />
+    </linearGradient>
+    <radialGradient id="moonM3" cx="50%" cy="22%" r="40%">
+      <stop offset="0%" stopColor="#fef08a" stopOpacity="0.85" />
+      <stop offset="30%" stopColor="#ca8a04" stopOpacity="0.35" />
+      <stop offset="70%" stopColor="#b45309" stopOpacity="0.1" />
+      <stop offset="100%" stopColor="#14100b" stopOpacity="0" />
+    </radialGradient>
+    <linearGradient id="villageRoofM" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#991b1b" />
+      <stop offset="50%" stopColor="#78350f" />
+      <stop offset="100%" stopColor="#451a03" />
+    </linearGradient>
+  </defs>
+
+  <!-- Nền trời đất hội Lim Kinh Bắc đêm trăng vằng vặc -->
+  <rect width="1080" height="1920" fill="url(#kbSkyM)" />
+  <circle cx="540" cy="420" r="380" fill="url(#moonM3)" />
+  <circle cx="540" cy="380" r="64" fill="#fffbeb" fill-opacity="0.9" />
+
+  <!-- Tán cây đa cổ thụ che chở góc trên màn hình -->
+  <g transform="translate(-100, -80)">
+    <ellipse cx="320" cy="240" rx="360" ry="160" fill="#142c1b" fill-opacity="0.8" />
+    <ellipse cx="220" cy="280" rx="280" ry="120" fill="#064e3b" fill-opacity="0.75" />
+    <path d="M120,400 Q80,560 90,740" stroke="#1c110b" stroke-width="12" fill="none" />
+    <path d="M280,380 Q320,540 310,720" stroke="#1c110b" stroke-width="14" fill="none" />
+  </g>
+
+  <!-- Mái đình & cổng làng cổ Kinh Bắc đầu đao cong vút -->
+  <g transform="translate(140, 720)">
+    <!-- Tầng mái đình trên -->
+    <path d="M400,0 Q260,80 80,95 L720,95 Q540,80 400,0 Z" fill="url(#villageRoofM)" stroke="#f59e0b" stroke-width="2" />
+    <path d="M80,95 Q20,70 40,30 Q55,60 90,90" stroke="#fef08a" stroke-width="3" fill="none" />
+    <path d="M720,95 Q780,70 760,30 Q745,60 710,90" stroke="#fef08a" stroke-width="3" fill="none" />
+
+    <rect x="180" y="95" width="440" height="40" fill="#1b100a" stroke="#ca8a04" stroke-width="1" />
+
+    <!-- Tầng mái đình dưới rộng lớn -->
+    <path d="M400,125 Q160,225 -80,250 L880,250 Q640,225 400,125 Z" fill="url(#villageRoofM)" stroke="#f59e0b" stroke-width="2.5" />
+    <path d="M-80,250 Q-150,220 -130,160 Q-110,210 -70,240" stroke="#fef08a" stroke-width="3.5" fill="none" />
+    <path d="M880,250 Q950,220 930,160 Q910,210 870,240" stroke="#fef08a" stroke-width="3.5" fill="none" />
+
+    <!-- Cột lim sân đình -->
+    <rect x="-20" y="250" width="840" height="90" fill="#150c07" stroke="#78350f" stroke-width="1.5" />
+    <rect x="20" y="250" width="22" height="90" fill="#78350f" stroke="#ca8a04" stroke-width="1" />
+    <rect x="180" y="250" width="22" height="90" fill="#78350f" stroke="#ca8a04" stroke-width="1" />
+    <rect x="340" y="250" width="22" height="90" fill="#78350f" stroke="#ca8a04" stroke-width="1" />
+    <rect x="440" y="250" width="22" height="90" fill="#78350f" stroke="#ca8a04" stroke-width="1" />
+    <rect x="600" y="250" width="22" height="90" fill="#78350f" stroke="#ca8a04" stroke-width="1" />
+    <rect x="760" y="250" width="22" height="90" fill="#78350f" stroke="#ca8a04" stroke-width="1" />
+  </g>
+
+  <!-- Nón quai thao lớn & dải yếm đào Quan họ Kinh Bắc cách điệu -->
+  <g transform="translate(540, 1140) scale(1.6)">
+    <ellipse cx="0" cy="0" rx="90" ry="26" fill="#382113" stroke="#f59e0b" stroke-width="2.5" />
+    <circle cx="0" cy="0" r="18" fill="#fef08a" fill-opacity="0.8" />
+    <!-- Quai thao thắt lụa buông dài lãng đãng -->
+    <path d="M-50,14 Q-90,80 -40,160" stroke="#f59e0b" stroke-width="3" fill="none" />
+    <path d="M50,14 Q90,80 40,160" stroke="#f59e0b" stroke-width="3" fill="none" />
+    <path d="M0,24 Q-20,90 10,170" stroke="#ec4899" stroke-width="3" fill="none" />
+  </g>
+
+  <!-- Bến sông Cầu nước chảy lơ thơ phía dưới đáy -->
+  <rect y="1380" width="1080" height="540" fill="#0d0805" />
+  <ellipse cx="540" cy="1540" rx="440" ry="26" fill="#ca8a04" fill-opacity="0.25" />
+  <ellipse cx="540" cy="1680" rx="460" ry="28" fill="#991b1b" fill-opacity="0.2" />
+  <ellipse cx="540" cy="1820" rx="490" ry="30" fill="#d97706" fill-opacity="0.18" />
+
+  <!-- Khóm sen thơm ngát dạt bờ góc trái -->
+  <g transform="translate(180, 1720) scale(1.8)">
+    <ellipse cx="30" cy="20" rx="45" ry="14" fill="#064e3b" fill-opacity="0.85" stroke="#10b981" stroke-width="1" />
+    <path d="M18,12 Q30,-12 42,12 Z" fill="#991b1b" fill-opacity="0.8" />
+    <path d="M23,12 Q30,-4 37,12 Z" fill="#f43f5e" fill-opacity="0.9" />
+    <circle cx="30" cy="4" r="3" fill="#fef08a" />
+  </g>
+</svg>

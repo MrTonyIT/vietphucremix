@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronRight,
+  ChevronLeft,
+  ChevronDown,
   Info,
   Filter,
   Bookmark,
@@ -25,6 +27,12 @@ import {
   User,
   Volume2,
   VolumeX,
+  Sun,
+  Moon,
+  HelpCircle,
+  Coins,
+  Award,
+  Crown,
 } from 'lucide-react';
 import { OutfitVisualizer } from './components/OutfitVisualizer';
 import { InspirationResultData } from './components/InspirationSceneVisualizer';
@@ -34,6 +42,7 @@ import { ChatAssistant } from './components/ChatAssistant';
 import { ShopeeSearchButton } from './components/ShopeeSearchButton';
 import { UIBackground } from './components/UIBackground';
 import { UserAuthHeader } from './components/UserAuthHeader';
+import { HeritageAudioPlayer } from './components/HeritageAudioPlayer';
 import { useAuth } from './firebase/AuthContext';
 import {
   CatalogItem,
@@ -88,6 +97,33 @@ const CatalogModal = React.lazy(() =>
 const InspirationSceneVisualizer = React.lazy(() =>
   import('./components/InspirationSceneVisualizer').then((m) => ({ default: m.InspirationSceneVisualizer }))
 );
+const QuickGuideModal = React.lazy(() =>
+  import('./components/QuickGuideModal').then((m) => ({ default: m.QuickGuideModal }))
+);
+const GroupCoordinatorModal = React.lazy(() =>
+  import('./components/GroupCoordinatorModal').then((m) => ({ default: m.GroupCoordinatorModal }))
+);
+const BudgetEstimatorModal = React.lazy(() =>
+  import('./components/BudgetEstimatorModal').then((m) => ({ default: m.BudgetEstimatorModal }))
+);
+const HeritageQuizModal = React.lazy(() =>
+  import('./components/HeritageQuizModal').then((m) => ({ default: m.HeritageQuizModal }))
+);
+const ExportOutfitModal = React.lazy(() =>
+  import('./components/ExportOutfitModal').then((m) => ({ default: m.ExportOutfitModal }))
+);
+const FengShuiAnalyzerModal = React.lazy(() =>
+  import('./components/FengShuiAnalyzerModal').then((m) => ({ default: m.FengShuiAnalyzerModal }))
+);
+const HeritageSpotRadarModal = React.lazy(() =>
+  import('./components/HeritageSpotRadarModal').then((m) => ({ default: m.HeritageSpotRadarModal }))
+);
+const PoseGuideModal = React.lazy(() =>
+  import('./components/PoseGuideModal').then((m) => ({ default: m.PoseGuideModal }))
+);
+const DynastyTimelineModal = React.lazy(() =>
+  import('./components/DynastyTimelineModal').then((m) => ({ default: m.DynastyTimelineModal }))
+);
 
 export default function App() {
   // Main State
@@ -126,12 +162,32 @@ export default function App() {
     }
   }, [user, cloudLookbooks]);
 
+  // Quick Guide Modal (Show on first visit or user manual trigger)
+  const [showQuickGuide, setShowQuickGuide] = useState<boolean>(() => {
+    try {
+      return !localStorage.getItem('vietphuc_onboarded_v1');
+    } catch {
+      return false;
+    }
+  });
+
   // Modals & Drawers
   const [showCatalogModal, setShowCatalogModal] = useState<boolean>(false);
   const [swapModalSlot, setSwapModalSlot] = useState<SlotType | null>(null);
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
   const [showLookbookModal, setShowLookbookModal] = useState<boolean>(false);
   const [showCompareModal, setShowCompareModal] = useState<boolean>(false);
+  const [showGroupModal, setShowGroupModal] = useState<boolean>(false);
+  const [showBudgetModal, setShowBudgetModal] = useState<boolean>(false);
+  const [showQuizModal, setShowQuizModal] = useState<boolean>(false);
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [showFengShuiModal, setShowFengShuiModal] = useState<boolean>(false);
+  const [showSpotRadarModal, setShowSpotRadarModal] = useState<boolean>(false);
+  const [showPoseGuideModal, setShowPoseGuideModal] = useState<boolean>(false);
+  const [showDynastyModal, setShowDynastyModal] = useState<boolean>(false);
+  const [isHeritageMenuOpen, setIsHeritageMenuOpen] = useState<boolean>(false);
+  const [mainView, setMainView] = useState<'studio' | 'heritage' | 'recipes'>('studio');
+  const [recipeFilterSlug, setRecipeFilterSlug] = useState<EntitySlug | 'all'>('all');
   const [lookbookEntries, setLookbookEntries] = useState<LookbookEntry[]>([]);
   const [showRecModal, setShowRecModal] = useState<boolean>(false);
   const [candidates, setCandidates] = useState<CandidateOutfit[]>([]);
@@ -141,6 +197,22 @@ export default function App() {
   const [selectedSceneId, setSelectedSceneId] = useState<string>('scene-studio');
   const [inspirationResult, setInspirationResult] = useState<InspirationResultData | null>(null);
   const [generationHistory, setGenerationHistory] = useState<InspirationResultData[]>([]);
+
+  // Handler áp dụng bộ đồ từ Phối Đôi/Nhóm hoặc Trắc Nghiệm
+  const handleApplyCustomOutfit = (
+    newItems: Partial<Record<SlotType, CatalogItem>>,
+    entitySlug: EntitySlug,
+    gender: GenderType
+  ) => {
+    setSelectedSlug(entitySlug);
+    if (gender !== 'all') {
+      setSelectedGender(gender);
+    }
+    setCurrentItems(newItems);
+    setLockedSlots([]);
+    setMainView('studio');
+    showToast(`Đã áp dụng thành công bộ đồ vào bàn làm việc!`, 'success');
+  };
 
   // Toast Feedback State with Robust Timer Management
   const [toastMessage, setToastMessage] = useState<{
@@ -161,6 +233,48 @@ export default function App() {
     } else {
       showToast('Đã tắt hiệu ứng âm thanh', 'info');
     }
+  };
+
+  // Theme State (Light / Dark Mode)
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem('vietphuc_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        return 'light';
+      }
+    } catch {}
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light');
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+    } else {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'dark');
+    }
+    try {
+      localStorage.setItem('vietphuc_theme', theme);
+    } catch {}
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    if (soundOn) {
+      playSilkChime();
+    }
+    showToast(
+      next === 'light'
+        ? 'Đã chuyển sang chế độ Sáng — Phù hợp môi trường nhiều ánh sáng'
+        : 'Đã chuyển sang chế độ Tối — Dịu mắt, phù hợp môi trường ban đêm',
+      'info'
+    );
   };
 
   const showToast = useCallback(
@@ -333,6 +447,7 @@ export default function App() {
 
   // Switch Entity Group
   const handleSelectGroup = (slug: EntitySlug) => {
+    setMainView('studio');
     requestSeqRef.current += 1;
     const targetRecipe = recipes.find((r) => r.entitySlug === slug);
     if (!targetRecipe) return;
@@ -352,6 +467,7 @@ export default function App() {
 
   // Reset to default recipe
   const handleResetOutfit = () => {
+    setMainView('studio');
     requestSeqRef.current += 1;
     const targetRecipe = recipes.find((r) => r.entitySlug === selectedSlug);
     if (!targetRecipe) return;
@@ -371,6 +487,7 @@ export default function App() {
 
   // Apply predefined recipe from Preset Bar
   const handleApplyRecipe = (recipe: OutfitRecipe) => {
+    setMainView('studio');
     const itemsMap: Partial<Record<SlotType, CatalogItem>> = {};
     for (const [slot, itemId] of Object.entries(recipe.defaultItemIds)) {
       const item = catalogItems.find((c) => c.id === itemId);
@@ -677,9 +794,9 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen text-stone-100 flex flex-col font-sans selection:bg-[#cba369]/30 selection:text-[#f5d99f] overflow-x-hidden relative bg-transparent">
+      <div className={`min-h-screen flex flex-col font-sans selection:bg-[#cba369]/30 selection:text-[#f5d99f] overflow-x-hidden relative bg-transparent transition-colors duration-250 ${theme === 'light' ? 'text-[#21160e]' : 'text-stone-100'}`}>
         {/* Official Artwork Background (PC Landscape & Mobile Portrait) */}
-        <UIBackground />
+        <UIBackground theme={theme} />
 
         {/* Toast Notification Floating Banner */}
         {toastMessage && (
@@ -737,76 +854,145 @@ export default function App() {
               </div>
             </div>
 
-            {/* Header Actions - Zero Overflow with responsive compact labels */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
-              {/* Sound Toggle Button */}
+            {/* Center Navigation Tabs: Phòng Phối Đồ | Bách Khoa Di Sản | Bộ Mẫu Sẵn */}
+            <nav className="flex items-center p-1 rounded-2xl bg-[#1b130e]/95 border border-[#cba369]/35 shadow-inner order-last md:order-none w-full md:w-auto justify-center">
               <button
                 type="button"
-                onClick={handleToggleSound}
-                className="min-h-[42px] sm:min-h-[44px] px-2 sm:px-2.5 rounded-xl bg-[#241a13]/85 hover:bg-[#322319] border border-[#cba369]/35 text-xs font-semibold text-[#f5d99f] transition-colors flex items-center justify-center space-x-1 cursor-pointer shadow-sm"
-                title={soundOn ? 'Âm thanh ngũ cung đang bật (nhấp để tắt)' : 'Âm thanh đang tắt (nhấp để bật)'}
-                aria-label={soundOn ? 'Tắt âm thanh hiệu ứng' : 'Bật âm thanh hiệu ứng'}
+                onClick={() => setMainView('studio')}
+                className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  mainView === 'studio'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md border border-amber-400/50'
+                    : 'text-[#d5c3aa] hover:text-white hover:bg-white/5'
+                }`}
               >
-                {soundOn ? (
-                  <Volume2 className="w-4 h-4 text-amber-400 shrink-0" />
-                ) : (
-                  <VolumeX className="w-4 h-4 text-stone-500 shrink-0" />
-                )}
-                <span className="hidden lg:inline text-[11px] text-stone-300">
-                  {soundOn ? 'Âm thanh' : 'Tắt âm'}
-                </span>
+                <span>👘</span>
+                <span>Phòng Phối Đồ</span>
               </button>
 
-              {/* Google Auth / Profile Sync */}
-              <UserAuthHeader />
-
-              {/* Compare Button */}
               <button
                 type="button"
-                onClick={() => setShowCompareModal(true)}
-                className="min-h-[42px] sm:min-h-[44px] px-2.5 sm:px-3 rounded-xl bg-[#241a13]/85 hover:bg-[#322319] border border-[#cba369]/35 text-xs font-semibold text-[#f5d99f] transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
-                title="So sánh đối chiếu 2 bộ phối trong Lookbook"
-                aria-label={`So sánh Lookbook (${lookbookEntries.length} bộ)`}
+                onClick={() => setMainView('heritage')}
+                className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  mainView === 'heritage'
+                    ? 'bg-gradient-to-r from-purple-800 to-amber-700 text-white shadow-md border border-amber-400/50'
+                    : 'text-[#d5c3aa] hover:text-white hover:bg-white/5'
+                }`}
               >
-                <Scale className="w-4 h-4 text-[#d4af37] shrink-0" />
-                <span className="hidden min-[380px]:inline">So Sánh</span>
-                <span className="text-[11px] font-mono">({lookbookEntries.length})</span>
+                <span>🏛️</span>
+                <span>Bách Khoa Di Sản</span>
               </button>
 
-              {/* Chat Assistant Toggle Button in Header */}
               <button
                 type="button"
-                onClick={() => setIsChatOpen((prev) => !prev)}
-                className="min-h-[42px] sm:min-h-[44px] px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-[#9b3424]/40 via-[#b84034]/40 to-[#cba369]/30 hover:from-[#b84034]/60 hover:to-[#cba369]/50 border border-[#cba369]/45 text-xs font-semibold text-[#fdf8f0] transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
-                aria-label="Mở Trợ lý AI"
+                onClick={() => setMainView('recipes')}
+                className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  mainView === 'recipes'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md border border-amber-400/50'
+                    : 'text-[#d5c3aa] hover:text-white hover:bg-white/5'
+                }`}
               >
-                <MessageSquare className="w-4 h-4 text-[#f5d99f] shrink-0" />
-                <span className="hidden min-[380px]:inline">Trợ lý</span>
-                <span>AI</span>
+                <span>✨</span>
+                <span>Bộ Mẫu Sẵn</span>
+                <span className="text-[10px] opacity-75 font-mono">({recipes.length})</span>
               </button>
+            </nav>
 
-              {/* Lookbook Button */}
-              <button
-                type="button"
-                onClick={() => setShowLookbookModal(true)}
-                className="min-h-[42px] sm:min-h-[44px] px-2.5 sm:px-3 rounded-xl bg-[#241a13]/85 hover:bg-[#322319] border border-[#cba369]/35 text-xs font-semibold text-[#f5d99f] transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
-                aria-label={`Mở Lookbook (${lookbookEntries.length} bộ)`}
-              >
-                <Bookmark className="w-4 h-4 text-[#d4af37] shrink-0" />
-                <span className="hidden min-[380px]:inline">Lookbook</span>
-                <span className="text-[11px] font-mono">({lookbookEntries.length})</span>
-              </button>
+            {/* Header Actions - Balanced, spacious, and uncluttered */}
+            <div className="flex items-center gap-1.5 sm:gap-2 justify-end">
 
-              {/* Catalog Button */}
+              {/* 2. Thư viện Catalog */}
               <button
                 type="button"
                 onClick={() => setShowCatalogModal(true)}
-                className="min-h-[42px] sm:min-h-[44px] px-2.5 sm:px-3 rounded-xl bg-[#241a13]/85 hover:bg-[#322319] border border-[#cba369]/30 text-xs font-medium text-[#e5ceb5] transition-colors flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
+                className="min-h-[42px] px-3 rounded-xl bg-[#241a13]/85 hover:bg-[#322319] border border-[#cba369]/35 text-xs font-medium text-[#e5ceb5] transition-colors hidden md:flex items-center space-x-1.5 cursor-pointer shadow-sm"
                 aria-label="Mở Thư Viện Catalog"
               >
                 <Layers className="w-4 h-4 text-[#d4af37] shrink-0" />
-                <span className="hidden min-[380px]:inline">Catalog</span>
+                <span>Catalog</span>
               </button>
+
+              {/* 3. Lookbook Button */}
+              <button
+                type="button"
+                onClick={() => setShowLookbookModal(true)}
+                className="min-h-[42px] px-3 rounded-xl bg-[#241a13]/85 hover:bg-[#322319] border border-[#cba369]/35 text-xs font-semibold text-[#f5d99f] transition-colors flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                aria-label={`Mở Lookbook (${lookbookEntries.length} bộ)`}
+              >
+                <Bookmark className="w-4 h-4 text-[#d4af37] shrink-0" />
+                <span className="hidden sm:inline">Lookbook</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono border border-amber-400/30">
+                  {lookbookEntries.length}
+                </span>
+              </button>
+
+              {/* 4. Highlight Action: Xuất Thẻ & PDF */}
+              <button
+                type="button"
+                onClick={() => setShowExportModal(true)}
+                className="min-h-[42px] px-3 sm:px-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-[#cba369] hover:brightness-110 text-stone-950 font-bold text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-md shadow-amber-900/30"
+                title="Xuất bản phối ra thẻ danh thiếp (Ảnh 4K) hoặc file PDF ngoại tuyến"
+              >
+                <Crown className="w-4 h-4 text-stone-900 shrink-0" />
+                <span className="hidden sm:inline">Xuất Thẻ</span>
+                <span className="text-[10px] bg-stone-900/20 px-1 py-0.5 rounded text-stone-950 font-mono font-extrabold">
+                  PDF
+                </span>
+              </button>
+
+              {/* 5. Trợ lý AI */}
+              <button
+                type="button"
+                onClick={() => setIsChatOpen((prev) => !prev)}
+                className="min-h-[42px] px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-[#9b3424]/50 via-[#b84034]/50 to-[#cba369]/30 hover:from-[#b84034]/70 hover:to-[#cba369]/50 border border-[#cba369]/40 text-xs font-semibold text-white transition-colors flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                aria-label="Mở Trợ lý AI"
+              >
+                <MessageSquare className="w-4 h-4 text-[#f5d99f] shrink-0" />
+                <span className="hidden min-[520px]:inline">Trợ Lý AI</span>
+              </button>
+
+              {/* 6. Google Auth / Cloud Sync */}
+              <UserAuthHeader />
+
+              {/* 7. Settings Control Cluster: [Âm thanh + Theme + Hướng dẫn] gom thành 1 pill thanh lịch */}
+              <div className="flex items-center bg-[#20150f]/90 border border-[#cba369]/30 rounded-xl p-0.5 shadow-sm">
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  className="p-2 rounded-lg text-stone-400 hover:text-amber-300 hover:bg-[#2b1c14] transition-colors"
+                  title={soundOn ? 'Tắt âm thanh hiệu ứng' : 'Bật âm thanh hiệu ứng'}
+                  aria-label="Âm thanh"
+                >
+                  {soundOn ? (
+                    <Volume2 className="w-4 h-4 text-amber-400" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-stone-500" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleTheme}
+                  className="p-2 rounded-lg text-stone-400 hover:text-amber-300 hover:bg-[#2b1c14] transition-colors"
+                  title={theme === 'dark' ? 'Chuyển sang chế độ Sáng' : 'Chuyển sang chế độ Tối'}
+                  aria-label="Giao diện"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-amber-300" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-amber-500" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowQuickGuide(true)}
+                  className="p-2 rounded-lg text-stone-400 hover:text-amber-300 hover:bg-[#2b1c14] transition-colors"
+                  title="Mở hướng dẫn nhanh"
+                  aria-label="Hướng dẫn"
+                >
+                  <HelpCircle className="w-4 h-4 text-amber-400" />
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -823,252 +1009,218 @@ export default function App() {
             </div>
           )}
 
-          {/* Builder Filter Bar */}
-          <section className="bg-[#16110d]/75 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#cba369]/20 pb-3">
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-[#d4af37]" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-white font-serif">
-                  Bộ Điều Khiển Phối Đồ
-                </h2>
-              </div>
-              <div className="text-xs text-[#d5c3aa] flex items-center space-x-2">
-                <span>Khóa vị trí để cố định món đồ khi AI tư vấn</span>
-                {lockedSlots.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#cba369]/20 text-[#f5d99f] text-[10px] font-mono border border-[#cba369]/40">
-                    Đang khóa {lockedSlots.length} vị trí
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
-              {/* 1. Event Selector */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="builder-event-select"
-                  className="text-xs text-[#e5ceb5] font-medium flex items-center space-x-1 cursor-pointer"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>Bối cảnh:</span>
-                </label>
-                <select
-                  id="builder-event-select"
-                  value={selectedEvent}
-                  onChange={(e) => setSelectedEvent(e.target.value as EventType)}
-                  className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/30 rounded-xl px-2.5 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-[#d4af37] cursor-pointer"
-                >
-                  <option value="KY_YEU">🎓 Chụp Kỷ Yếu</option>
-                  <option value="LE_HOI_TRUONG">🏮 Lễ Hội Trường</option>
-                  <option value="CHUP_ANH_NGHE_THUAT">📸 Ảnh Nghệ Thuật</option>
-                  <option value="DAO_PHO">☕ Dạo Phố</option>
-                </select>
-              </div>
-
-              {/* 2. Entity Group Selector */}
-              <div className="space-y-1.5">
-                <span className="text-xs text-[#e5ceb5] font-medium block">Nhóm áo chính:</span>
-                <div className="grid grid-cols-3 gap-1 bg-[#100b08]/90 p-1 rounded-xl border border-[#cba369]/30" role="tablist">
-                  {(['ao-dai', 'ngu-than', 'tu-than'] as EntitySlug[]).map((slug) => (
-                    <button
-                      key={slug}
-                      type="button"
-                      role="tab"
-                      aria-selected={selectedSlug === slug}
-                      onClick={() => handleSelectGroup(slug)}
-                      className={`min-h-[42px] py-1 px-1 rounded-lg text-xs font-medium transition-all text-center cursor-pointer flex items-center justify-center ${
-                        selectedSlug === slug
-                          ? 'bg-[#cba369]/30 text-[#f5d99f] font-semibold border border-[#d4af37]/45'
-                          : 'text-[#d5c3aa] hover:text-white'
-                      }`}
-                    >
-                      {slug === 'ao-dai' ? 'Áo Dài' : slug === 'ngu-than' ? 'Ngũ Thân' : 'Tứ Thân'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 3. Gender Selector */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="builder-gender-select"
-                  className="text-xs text-[#e5ceb5] font-medium flex items-center space-x-1 cursor-pointer"
-                >
-                  <Users className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>Giới tính:</span>
-                </label>
-                <select
-                  id="builder-gender-select"
-                  value={selectedGender}
-                  onChange={(e) => setSelectedGender(e.target.value as GenderType)}
-                  className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/30 rounded-xl px-2.5 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-[#d4af37] cursor-pointer"
-                >
-                  {GENDER_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.vi}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 4. Age Group Selector */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="builder-age-select"
-                  className="text-xs text-[#e5ceb5] font-medium flex items-center space-x-1 cursor-pointer"
-                >
-                  <User className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>Độ tuổi:</span>
-                </label>
-                <select
-                  id="builder-age-select"
-                  value={selectedAgeGroup}
-                  onChange={(e) => setSelectedAgeGroup(e.target.value as AgeGroupType)}
-                  className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/30 rounded-xl px-2.5 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-[#d4af37] cursor-pointer"
-                >
-                  {AGE_GROUP_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.vi}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 5. Style Preference Selector */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="builder-style-select"
-                  className="text-xs text-[#e5ceb5] font-medium flex items-center space-x-1 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>Phong cách:</span>
-                </label>
-                <select
-                  id="builder-style-select"
-                  value={selectedStyle}
-                  onChange={(e) => setSelectedStyle(e.target.value)}
-                  className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/30 rounded-xl px-2.5 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-[#d4af37] cursor-pointer"
-                >
-                  {STYLE_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id === 'all' ? '' : opt.id}>
-                      {opt.vi}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 6. Preferred Color Palette */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="builder-color-select"
-                  className="text-xs text-[#e5ceb5] font-medium flex items-center space-x-1 cursor-pointer"
-                >
-                  <Palette className="w-3.5 h-3.5 text-[#d4af37]" />
-                  <span>Tông màu:</span>
-                </label>
-                <select
-                  id="builder-color-select"
-                  value={preferredColor}
-                  onChange={(e) => setPreferredColor(e.target.value)}
-                  className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/30 rounded-xl px-2.5 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-[#d4af37] cursor-pointer"
-                >
-                  <option value="">Tất cả bảng màu</option>
-                  <option value="trang">Trắng Ngọc Trai / Kem</option>
-                  <option value="xanh">Xanh Cẩm Thạch / Lam</option>
-                  <option value="hong">Hồng Phấn Pastel</option>
-                  <option value="vang">Vàng Tơ Tằm / Hổ Phách</option>
-                  <option value="nau">Nâu Trầm Củ Nâu</option>
-                  <option value="do">Đỏ Mận / Đỏ Thắm</option>
-                </select>
-              </div>
-
-              {/* 7. Action: Gợi ý bộ phối */}
-              <div className="space-y-1.5 flex flex-col justify-end">
-                <button
-                  type="button"
-                  onClick={handleFetchRecommendations}
-                  disabled={isLoadingRecs}
-                  className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-gradient-to-r from-[#9b3424] via-[#b84034] to-[#c89b3c] hover:from-[#b84034] hover:to-[#d4af37] text-white text-xs font-bold shadow-lg shadow-black/40 transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <Sparkles className="w-4 h-4 text-[#f5d99f]" />
-                  <span>{isLoadingRecs ? 'Đang lọc...' : 'Gợi Ý Bộ Phối'}</span>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* Preset Recipes Showcase Bar (16 Curated Complete Outfits with 1-Click Try-on & Shopee Links) */}
-          <section className="bg-[#16110d]/75 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#cba369]/20 pb-2.5">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-[#d4af37]" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white font-serif">
-                  Khám Phá Nhanh Bộ Phối Tiêu Biểu ({recipes.length} Bộ Mẫu Sẵn)
-                </h3>
-              </div>
-              <span className="text-xs text-[#d5c3aa]">
-                Thử đồ 1 chạm • Tự động gắn đủ các vị trí • Mua sắm Shopee tham khảo
-              </span>
-            </div>
-
-            {/* Horizontal Scrollable Carousel */}
-            <div className="flex items-stretch space-x-3 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-stone-800">
-              {recipes.map((rec) => {
-                const mainItemId = rec.defaultItemIds.main;
-                const mainItem = catalogItems.find((c) => c.id === mainItemId);
-                const display = EntityDisplayData[rec.entitySlug];
-
-                return (
-                  <div
-                    key={rec.id}
-                    className="min-w-[260px] sm:min-w-[280px] max-w-[300px] bg-[#100b08]/85 border border-[#cba369]/25 hover:border-[#d4af37]/60 rounded-2xl p-3.5 flex flex-col justify-between transition-all shrink-0 hover:shadow-lg hover:shadow-black/40 group"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 text-[11px] mb-1.5">
-                        <span className="px-2 py-0.5 rounded-full bg-[#cba369]/20 text-[#f5d99f] font-medium border border-[#cba369]/35">
-                          {display?.name || rec.entitySlug}
-                        </span>
-                        <span className="text-[#d4af37] font-bold font-mono">
-                          {rec.matchScore}% điểm
-                        </span>
-                      </div>
-
-                      <h4 className="text-xs font-bold text-white group-hover:text-[#f5d99f] transition-colors line-clamp-1">
-                        {rec.recipeName}
-                      </h4>
-
-                      <p className="text-[11px] text-[#dfd3c3] line-clamp-2 mt-1 leading-relaxed">
-                        {rec.description}
-                      </p>
-
-                      <div className="mt-2 text-[10px] text-[#cba369] italic truncate">
-                        {rec.colorHarmony}
-                      </div>
+          {/* VIEW 1: STUDIO (Phòng Phối Đồ) */}
+          {mainView === 'studio' && (
+            <>
+              {/* Builder Customization Bar - Refined, Spacious, Uncluttered */}
+              <section className="bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#cba369]/20 pb-3">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
+                      <Sparkles className="w-4 h-4" />
                     </div>
-
-                    <div className="pt-3 border-t border-[#cba369]/20 mt-3 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleApplyRecipe(rec)}
-                          className="flex-1 min-h-[38px] px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#9b3424] to-[#c89b3c] hover:from-[#b84034] hover:to-[#d4af37] text-white text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-sm active:scale-95"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Mặc thử ngay</span>
-                        </button>
-                      </div>
-
-                      {mainItem && (
-                        <div className="flex justify-end">
-                          <ShopeeSearchButton itemName={mainItem.name} compact variant="badge" />
-                        </div>
-                      )}
+                    <div>
+                      <h2 className="text-sm sm:text-base font-bold uppercase tracking-wider text-white font-serif">
+                        Bộ Điều Khiển Phối Đồ
+                      </h2>
+                      <p className="text-xs text-[#d5c3aa]">
+                        Tùy biến tiêu chí nhân vật, phom dáng và bảng màu truyền thống
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+
+                  <div className="flex items-center space-x-2 text-xs">
+                    {lockedSlots.length > 0 && (
+                      <span className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-200 text-xs font-medium border border-amber-400/30 flex items-center space-x-1">
+                        <Lock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Khóa {lockedSlots.length} vị trí</span>
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowFengShuiModal(true)}
+                      className="px-3 py-1.5 rounded-xl bg-[#261912] hover:bg-[#382419] border border-amber-500/40 text-amber-200 font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                      title="Chấm điểm ngũ hành và tương sinh cho bộ đồ hiện tại"
+                    >
+                      <span>☯️</span>
+                      <span className="hidden sm:inline">Chấm Phong Thủy</span>
+                      <span className="sm:hidden">Phong Thủy</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMainView('heritage')}
+                      className="px-3 py-1.5 rounded-xl bg-[#1b1420] hover:bg-[#2a1e32] border border-purple-500/40 text-purple-200 font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                      title="Mở Bách Khoa Di Sản & Các Tiện Ích"
+                    >
+                      <span>🏛️</span>
+                      <span className="hidden sm:inline">Bách Khoa Di Sản</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tầng 1: Định hình Nhân vật & Phom dáng (3 Cột Rộng Rãi, Cân Đối) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  {/* 1. Nhóm cổ phục chính (Segmented tabs) */}
+                  <div className="space-y-1.5">
+                    <span className="text-xs text-amber-200/90 font-medium block">
+                      Phom dáng trang phục:
+                    </span>
+                    <div
+                      className="grid grid-cols-3 gap-1 bg-[#100b08]/90 p-1 rounded-xl border border-[#cba369]/35 min-h-[44px] items-center"
+                      role="tablist"
+                    >
+                      {(['ao-dai', 'ngu-than', 'tu-than'] as EntitySlug[]).map((slug) => (
+                        <button
+                          key={slug}
+                          type="button"
+                          role="tab"
+                          aria-selected={selectedSlug === slug}
+                          onClick={() => handleSelectGroup(slug)}
+                          className={`h-[36px] py-1 px-1.5 rounded-lg text-xs font-medium transition-all text-center cursor-pointer flex items-center justify-center ${
+                            selectedSlug === slug
+                              ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold border border-amber-400/60 shadow-sm'
+                              : 'text-[#d5c3aa] hover:text-white hover:bg-[#1a120d]'
+                          }`}
+                        >
+                          {slug === 'ao-dai' ? 'Áo Dài' : slug === 'ngu-than' ? 'Ngũ Thân' : 'Tứ Thân'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 2. Đối tượng mặc */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="builder-gender-select"
+                      className="text-xs text-amber-200/90 font-medium flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <Users className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Đối tượng mặc:</span>
+                    </label>
+                    <select
+                      id="builder-gender-select"
+                      value={selectedGender}
+                      onChange={(e) => setSelectedGender(e.target.value as GenderType)}
+                      className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/35 hover:border-amber-400 rounded-xl px-3 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-amber-400 cursor-pointer transition-colors shadow-inner"
+                    >
+                      {GENDER_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.vi}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 3. Độ tuổi nhân vật */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="builder-age-select"
+                      className="text-xs text-amber-200/90 font-medium flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <User className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Độ tuổi nhân vật:</span>
+                    </label>
+                    <select
+                      id="builder-age-select"
+                      value={selectedAgeGroup}
+                      onChange={(e) => setSelectedAgeGroup(e.target.value as AgeGroupType)}
+                      className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/35 hover:border-amber-400 rounded-xl px-3 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-amber-400 cursor-pointer transition-colors shadow-inner"
+                    >
+                      {AGE_GROUP_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.vi}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Tầng 2: Bối cảnh, Hòa sắc & Gợi ý AI (4 Cột Rộng Rãi, Cân Đối) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-3.5 border-t border-[#cba369]/20 items-end">
+                  {/* 4. Bối cảnh xuất hiện (Chụp kỷ yếu, Lễ hội, v.v.) */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="builder-event-select"
+                      className="text-xs text-amber-200/90 font-medium flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Bối cảnh xuất hiện:</span>
+                    </label>
+                    <select
+                      id="builder-event-select"
+                      value={selectedEvent}
+                      onChange={(e) => setSelectedEvent(e.target.value as EventType)}
+                      className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/35 hover:border-amber-400 rounded-xl px-3 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-amber-400 cursor-pointer transition-colors shadow-inner"
+                    >
+                      <option value="KY_YEU">🎓 Chụp Kỷ Yếu Học Đường</option>
+                      <option value="LE_HOI_TRUONG">🏮 Lễ Hội & Sự Kiện Cổ Phong</option>
+                      <option value="CHUP_ANH_NGHE_THUAT">📸 Bộ Ảnh Nghệ Thuật Di Sản</option>
+                      <option value="DAO_PHO">☕ Dạo Phố & Check-in Cuối Tuần</option>
+                    </select>
+                  </div>
+
+                  {/* 5. Bảng màu chủ đạo */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="builder-color-select"
+                      className="text-xs text-amber-200/90 font-medium flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <Palette className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Bảng màu chủ đạo:</span>
+                    </label>
+                    <select
+                      id="builder-color-select"
+                      value={preferredColor}
+                      onChange={(e) => setPreferredColor(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/35 hover:border-amber-400 rounded-xl px-3 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-amber-400 cursor-pointer transition-colors shadow-inner"
+                    >
+                      <option value="">Tất cả bảng màu truyền thống</option>
+                      <option value="trang">Trắng Bạch Ngọc / Kem Ngà</option>
+                      <option value="xanh">Xanh Cẩm Thạch / Lam Sẫm</option>
+                      <option value="hong">Hồng Phấn Pastel (Remix Trẻ)</option>
+                      <option value="vang">Vàng Hoàng Yến / Hổ Phách</option>
+                      <option value="nau">Nâu Sồng / Sa Thạch Mộc Mạc</option>
+                      <option value="do">Đỏ Chu Sa / Đỏ Thắm Mận</option>
+                    </select>
+                  </div>
+
+                  {/* 6. Định hướng phong cách */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="builder-style-select"
+                      className="text-xs text-amber-200/90 font-medium flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Định hướng phong cách:</span>
+                    </label>
+                    <select
+                      id="builder-style-select"
+                      value={selectedStyle}
+                      onChange={(e) => setSelectedStyle(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#100b08]/90 border border-[#cba369]/35 hover:border-amber-400 rounded-xl px-3 py-2 text-xs text-[#f5efe6] focus:outline-none focus:border-amber-400 cursor-pointer transition-colors shadow-inner"
+                    >
+                      {STYLE_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id === 'all' ? '' : opt.id}>
+                          {opt.vi}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 7. Action: Gợi ý AI */}
+                  <div className="space-y-1.5 flex flex-col justify-end">
+                    <button
+                      type="button"
+                      onClick={handleFetchRecommendations}
+                      disabled={isLoadingRecs}
+                      className="w-full min-h-[44px] py-2 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 text-xs sm:text-sm font-bold shadow-lg shadow-amber-900/40 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
+                    >
+                      <Sparkles className="w-4 h-4 text-stone-900" />
+                      <span>{isLoadingRecs ? 'Đang phân tích...' : 'Gợi Ý Phối Đồ AI'}</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
 
           {/* Workspace: Visualizer + Slots Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -1116,24 +1268,37 @@ export default function App() {
                   </div>
 
                   {/* Action Bar Under Visualizer */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    {/* Primary Button: Xuất Thẻ Danh Thiếp Thời Trang & PDF */}
                     <button
                       type="button"
-                      onClick={() => handleSaveToLookbook()}
-                      className="min-h-[44px] py-2.5 px-3 rounded-2xl bg-[#cba369]/25 hover:bg-[#d4af37] hover:text-[#100b08] text-[#f5d99f] text-xs font-bold border border-[#cba369]/45 transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-lg shadow-black/30"
+                      onClick={() => setShowExportModal(true)}
+                      className="w-full min-h-[46px] py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#d4af37] via-amber-400 to-[#cba369] hover:brightness-110 text-stone-950 text-xs font-bold shadow-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                      title="Xuất bộ phối ra thẻ danh thiếp thời trang (ảnh 4K) hoặc tài liệu PDF ngoại tuyến"
                     >
-                      <Bookmark className="w-4 h-4" />
-                      <span>Lưu bộ đồ</span>
+                      <Crown className="w-4 h-4 text-stone-900" />
+                      <span>Xuất Thẻ Danh Thiếp Thời Trang (Ảnh 4K / File PDF)</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={handleResetOutfit}
-                      className="min-h-[44px] py-2.5 px-3 rounded-2xl bg-[#1b140f]/90 hover:bg-[#281d16] text-[#e5ceb5] text-xs font-medium border border-[#cba369]/25 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
-                    >
-                      <RotateCcw className="w-4 h-4 text-[#d5c3aa]" />
-                      <span>Khôi phục bộ gốc</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveToLookbook()}
+                        className="min-h-[44px] py-2.5 px-3 rounded-2xl bg-[#cba369]/25 hover:bg-[#d4af37] hover:text-[#100b08] text-[#f5d99f] text-xs font-bold border border-[#cba369]/45 transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-lg shadow-black/30"
+                      >
+                        <Bookmark className="w-4 h-4" />
+                        <span>Lưu bộ đồ</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResetOutfit}
+                        className="min-h-[44px] py-2.5 px-3 rounded-2xl bg-[#1b140f]/90 hover:bg-[#281d16] text-[#e5ceb5] text-xs font-medium border border-[#cba369]/25 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                      >
+                        <RotateCcw className="w-4 h-4 text-[#d5c3aa]" />
+                        <span>Khôi phục bộ gốc</span>
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1323,11 +1488,9 @@ export default function App() {
                     <div className="space-y-3 text-sm">
                       {/* Sourced Fact */}
                       <div className="bg-[#0f0b08]/80 p-3.5 rounded-2xl border border-[#cba369]/25">
-                        <div className="flex items-center space-x-2 text-[#d4af37] font-semibold text-xs mb-1">
-                          <span className="px-1.5 py-0.5 rounded bg-[#cba369]/25 text-[#f5d99f] text-[10px] font-mono">
-                            SOURCED_FACT
-                          </span>
-                          <span>Tri Thức Cổ Phục Có Nguồn</span>
+                        <div className="flex items-center space-x-1.5 text-[#d4af37] font-semibold text-xs mb-1">
+                          <span>📜</span>
+                          <span>Tri Thức Cổ Phục Chính Thống</span>
                         </div>
                         <p className="text-[#f5efe6] text-xs sm:text-sm leading-relaxed">
                           {culture.sourcedFact}
@@ -1340,10 +1503,8 @@ export default function App() {
 
                       {/* Styling Note */}
                       <div className="bg-[#0f0b08]/80 p-3.5 rounded-2xl border border-[#cba369]/25">
-                        <div className="flex items-center space-x-2 text-purple-400 font-semibold text-xs mb-1">
-                          <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] font-mono">
-                            STYLING_NOTE
-                          </span>
+                        <div className="flex items-center space-x-1.5 text-purple-400 font-semibold text-xs mb-1">
+                          <span>✨</span>
                           <span>Gợi Ý Styling Hiện Đại (Remix)</span>
                         </div>
                         <p className="text-stone-300 text-xs sm:text-sm leading-relaxed">
@@ -1353,10 +1514,8 @@ export default function App() {
 
                       {/* Caution */}
                       <div className="bg-amber-950/20 p-3.5 rounded-2xl border border-amber-800/30">
-                        <div className="flex items-center space-x-2 text-amber-400 font-semibold text-xs mb-1">
-                          <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono">
-                            CAUTION
-                          </span>
+                        <div className="flex items-center space-x-1.5 text-amber-400 font-semibold text-xs mb-1">
+                          <span>⚠️</span>
                           <span>Lưu Ý Bối Cảnh Học Đường</span>
                         </div>
                         <p className="text-amber-200/90 text-xs sm:text-sm leading-relaxed">
@@ -1369,6 +1528,449 @@ export default function App() {
               </AnimatePresence>
             </div>
           </div>
+
+          {/* Bottom Calm Exploration Gateways */}
+          <section className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              onClick={() => setMainView('heritage')}
+              className="p-5 rounded-3xl bg-gradient-to-br from-[#201510] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl cursor-pointer group flex items-center justify-between gap-4"
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2 text-amber-300 font-serif font-bold text-sm sm:text-base">
+                  <span className="text-xl">🏛️</span>
+                  <span>Bách Khoa Cổ Phong & Tiện Ích Di Sản</span>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  8 công cụ văn hóa: Phong thủy ngũ hành, radar check-in di tích, cẩm nang dáng chụp, trục thời gian Lý – Nguyễn...
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:translate-x-1 transition-transform">
+                <ChevronRight className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div
+              onClick={() => setMainView('recipes')}
+              className="p-5 rounded-3xl bg-gradient-to-br from-[#201510] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl cursor-pointer group flex items-center justify-between gap-4"
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2 text-amber-300 font-serif font-bold text-sm sm:text-base">
+                  <span className="text-xl">✨</span>
+                  <span>Bộ Sưu Tập Mẫu Sẵn ({recipes.length} Bộ)</span>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Khám phá các bản phối kinh điển tiêu biểu của các triều đại, thử đồ 1-chạm và mua sắm Shopee tham khảo.
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:translate-x-1 transition-transform">
+                <ChevronRight className="w-5 h-5" />
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* VIEW 2: HERITAGE (Bách Khoa Di Sản) */}
+      {mainView === 'heritage' && (
+        <div className="space-y-6">
+          {/* Top Navigation & Title Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-5 sm:p-6 shadow-2xl">
+            <div>
+              <button
+                type="button"
+                onClick={() => setMainView('studio')}
+                className="text-xs text-amber-300 hover:text-white flex items-center space-x-1 mb-2 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Quay lại Phòng Phối Đồ</span>
+              </button>
+              <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white font-serif flex items-center space-x-2.5">
+                <span className="text-2xl">🏛️</span>
+                <span>Bách Khoa Cổ Phong & Tiện Ích Di Sản</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-[#d5c3aa] mt-1 max-w-2xl leading-relaxed">
+                Kho tàng tri thức lịch sử, phong thủy ngũ hành, cẩm nang tạo dáng và tọa độ di tích 3 miền dành cho học sinh, sinh viên và người yêu cổ phục Việt Nam.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMainView('studio')}
+              className="self-start sm:self-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+            >
+              <span>👘</span>
+              <span>Vào Phòng Phối Đồ</span>
+            </button>
+          </div>
+
+          {/* 8 Spacious Heritage Cards Grid (Spacious, balanced, calm) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Phong Thủy */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-900/50 border border-amber-500/30 flex items-center justify-center text-xl text-amber-300">
+                  ☯️
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Luận Giải Phong Thủy
+                  </h3>
+                  <p className="text-xs text-amber-200/80 font-medium">
+                    Ngũ hành & Lời chúc vượng khí
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Tra cứu Nạp Âm Can-Chi theo năm sinh, chấm điểm độ tương sinh của bảng màu áo chính, hạ y và phụ kiện đang mặc.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowFengShuiModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs border border-amber-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Mở Luận Giải Ngũ Hành</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 2: Radar Tọa Độ */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-900/50 border border-emerald-500/30 flex items-center justify-center text-xl text-emerald-300">
+                  🗺️
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Radar Tọa Độ Check-in
+                  </h3>
+                  <p className="text-xs text-emerald-200/80 font-medium">
+                    Di tích, giờ vàng & quy định 3 miền
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Danh bạ các bối cảnh lịch sử đẹp nhất tại Hà Nội, Huế, Hội An, Sài Gòn... tự động đề xuất nơi hòa hợp với bộ đồ đang mặc.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowSpotRadarModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-800/80 to-emerald-900/80 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs border border-emerald-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Mở Radar Tọa Độ</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 3: Cẩm Nang Tạo Dáng */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-purple-900/50 border border-purple-500/30 flex items-center justify-center text-xl text-purple-300">
+                  🪭
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Cẩm Nang Tạo Dáng
+                  </h3>
+                  <p className="text-xs text-purple-200/80 font-medium">
+                    4 nhóm phong thái chuẩn cốt cách
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Bí kíp tư thế thanh nhã: Cách cầm quạt the, nâng tà áo, nghiêng nón quai thao cho Nam nhi, Nữ tú, Cặp đôi và Nhóm kỷ yếu.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPoseGuideModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-800/80 to-purple-900/80 hover:from-purple-700 hover:to-purple-800 text-white font-bold text-xs border border-purple-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Xem Cẩm Nang Dáng</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 4: Dòng Thời Gian Lịch Sử */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-800/50 border border-amber-400/30 flex items-center justify-center text-xl text-amber-300">
+                  📜
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Dòng Thời Gian Lịch Sử
+                  </h3>
+                  <p className="text-xs text-amber-200/80 font-medium">
+                    Trục thời gian triều đại Lý – Nguyễn
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Trục thời gian từ thời Lý, Trần, Lê Sơ, Lê Trung Hưng đến triều Nguyễn & Tân Thời. 1-chạm chuyển tủ đồ tương ứng.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowDynastyModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs border border-amber-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Khám Phá Trục Triều Đại</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 5: Phối Đôi & Nhóm */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-blue-900/50 border border-blue-500/30 flex items-center justify-center text-xl text-blue-300">
+                  👥
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Phối Đôi & Nhóm Kỷ Yếu
+                  </h3>
+                  <p className="text-xs text-blue-200/80 font-medium">
+                    Hòa sắc kỷ yếu Nam Nữ & Tập thể
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Công cụ điều phối bảng màu tone-sur-tone cho cặp đôi và đội hình nhóm chụp ảnh tốt nghiệp thanh lịch, chuẩn mực.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowGroupModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-800/80 to-blue-900/80 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs border border-blue-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Mở Bàn Phối Đôi/Nhóm</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 6: Dự Toán Chi Phí */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-900/50 border border-emerald-500/30 flex items-center justify-center text-xl text-emerald-300">
+                  💰
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Dự Toán Chi Phí Thực Tế
+                  </h3>
+                  <p className="text-xs text-emerald-200/80 font-medium">
+                    Ước tính giá thuê/mua & tiệm uy tín
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Bảng tính chi phí chi tiết theo từng món, vị trí và danh bạ tiệm cổ phục chất lượng cao tại 3 miền Bắc – Trung – Nam.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowBudgetModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-800/80 to-emerald-900/80 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs border border-emerald-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Tính Dự Toán Ngân Sách</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 7: Trắc Nghiệm Cổ Phục */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-purple-900/50 border border-purple-500/30 flex items-center justify-center text-xl text-purple-300">
+                  🔮
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    Trắc Nghiệm Phong Cách
+                  </h3>
+                  <p className="text-xs text-purple-200/80 font-medium">
+                    Tìm cổ phục định mệnh của bạn
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  4 câu hỏi trắc nghiệm tâm hồn để khám phá phom dáng trang phục truyền thống tương thích nhất với khí chất của bạn.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowQuizModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-800/80 to-purple-900/80 hover:from-purple-700 hover:to-purple-800 text-white font-bold text-xs border border-purple-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Làm Trắc Nghiệm Style</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Card 8: So Sánh Lookbook */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#221711] to-[#18100b] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-900/50 border border-amber-500/30 flex items-center justify-center text-xl text-amber-300">
+                  ⚖️
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif">
+                    So Sánh & Đối Chiếu
+                  </h3>
+                  <p className="text-xs text-amber-200/80 font-medium">
+                    Đặt 2 bản phối cạnh nhau
+                  </p>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Xem song song 2 bộ đồ, so sánh bảng màu, chi tiết phụ kiện và sự hòa hợp trước khi ra quyết định may hoặc thuê.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowCompareModal(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-700/80 to-amber-800/80 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs border border-amber-400/40 transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Mở Bàn So Sánh</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 3: RECIPES (Bộ Mẫu Sẵn) */}
+      {mainView === 'recipes' && (
+        <div className="space-y-6">
+          {/* Header & Filter */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-5 sm:p-6 shadow-2xl">
+            <div>
+              <button
+                type="button"
+                onClick={() => setMainView('studio')}
+                className="text-xs text-amber-300 hover:text-white flex items-center space-x-1 mb-2 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Quay lại Phòng Phối Đồ</span>
+              </button>
+              <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white font-serif flex items-center space-x-2.5">
+                <span className="text-2xl">✨</span>
+                <span>Bộ Sưu Tập Phối Sẵn ({recipes.length} Bộ Mẫu)</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-[#d5c3aa] mt-1 leading-relaxed">
+                Các bản phối hoàn chỉnh được nghiên cứu theo điển chế lịch sử và thẩm mỹ đương đại. Bấm &quot;Mặc thử ngay&quot; để nạp trực tiếp vào phòng phối đồ.
+              </p>
+            </div>
+
+            {/* Phom Dáng Filter Tabs */}
+            <div className="flex items-center gap-1.5 bg-[#100b08] p-1 rounded-2xl border border-[#cba369]/30 shrink-0">
+              <button
+                type="button"
+                onClick={() => setRecipeFilterSlug('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  recipeFilterSlug === 'all'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                Tất cả ({recipes.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipeFilterSlug('ao-dai')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  recipeFilterSlug === 'ao-dai'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                Áo Dài
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipeFilterSlug('ngu-than')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  recipeFilterSlug === 'ngu-than'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                Ngũ Thân
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipeFilterSlug('tu-than')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  recipeFilterSlug === 'tu-than'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-stone-400 hover:text-white'
+                }`}
+              >
+                Tứ Thân
+              </button>
+            </div>
+          </div>
+
+          {/* Recipes Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {recipes
+              .filter((rec) => recipeFilterSlug === 'all' || rec.entitySlug === recipeFilterSlug)
+              .map((rec) => {
+                const mainItemId = rec.defaultItemIds.main;
+                const mainItem = catalogItems.find((c) => c.id === mainItemId);
+                const display = EntityDisplayData[rec.entitySlug];
+
+                return (
+                  <div
+                    key={rec.id}
+                    className="p-5 rounded-3xl bg-gradient-to-b from-[#20150f] to-[#140e0a] border border-[#cba369]/25 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4 group"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#cba369]/20 text-amber-300 font-medium border border-[#cba369]/35">
+                          {display?.name || rec.entitySlug}
+                        </span>
+                        <span className="text-[#d4af37] font-bold font-mono">
+                          {rec.matchScore}% điểm hòa sắc
+                        </span>
+                      </div>
+
+                      <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                        {rec.recipeName}
+                      </h3>
+
+                      <p className="text-xs text-[#dfd3c3] leading-relaxed line-clamp-3">
+                        {rec.description}
+                      </p>
+
+                      <div className="text-[11px] text-amber-400/90 italic">
+                        {rec.colorHarmony}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#cba369]/20 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => handleApplyRecipe(rec)}
+                        className="w-full min-h-[42px] py-2 px-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer active:scale-95"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-200" />
+                        <span>Mặc Thử Vào Phòng Phối Đồ</span>
+                      </button>
+
+                      {mainItem && (
+                        <div className="flex justify-end">
+                          <ShopeeSearchButton itemName={mainItem.name} compact variant="badge" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
         </main>
 
         {/* Floating Chat Assistant Drawer */}
@@ -1461,16 +2063,115 @@ export default function App() {
           )}
         </Suspense>
 
+        <Suspense fallback={null}>
+          {showQuickGuide && (
+            <QuickGuideModal
+              isOpen={showQuickGuide}
+              onClose={() => setShowQuickGuide(false)}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showGroupModal && (
+            <GroupCoordinatorModal
+              isOpen={showGroupModal}
+              onClose={() => setShowGroupModal(false)}
+              onApplyOutfit={handleApplyCustomOutfit}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showBudgetModal && (
+            <BudgetEstimatorModal
+              isOpen={showBudgetModal}
+              onClose={() => setShowBudgetModal(false)}
+              currentItems={currentItems}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showQuizModal && (
+            <HeritageQuizModal
+              isOpen={showQuizModal}
+              onClose={() => setShowQuizModal(false)}
+              onApplyOutfit={handleApplyCustomOutfit}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showExportModal && (
+            <ExportOutfitModal
+              isOpen={showExportModal}
+              onClose={() => setShowExportModal(false)}
+              entitySlug={selectedSlug}
+              gender={selectedGender}
+              ageGroup={selectedAgeGroup}
+              items={currentItems}
+              outfitName={recipes.find((r) => r.entitySlug === selectedSlug)?.recipeName}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showFengShuiModal && (
+            <FengShuiAnalyzerModal
+              isOpen={showFengShuiModal}
+              onClose={() => setShowFengShuiModal(false)}
+              currentItems={currentItems}
+              activeEntityName={EntityDisplayData[selectedSlug]?.name}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showSpotRadarModal && (
+            <HeritageSpotRadarModal
+              isOpen={showSpotRadarModal}
+              onClose={() => setShowSpotRadarModal(false)}
+              activeSlug={selectedSlug}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showPoseGuideModal && (
+            <PoseGuideModal
+              isOpen={showPoseGuideModal}
+              onClose={() => setShowPoseGuideModal(false)}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {showDynastyModal && (
+            <DynastyTimelineModal
+              isOpen={showDynastyModal}
+              onClose={() => setShowDynastyModal(false)}
+              onSelectDynasty={handleSelectGroup}
+              currentSlug={selectedSlug}
+            />
+          )}
+        </Suspense>
+
+        {/* Heritage Ambient Audio Player (Bottom floating sound engine) */}
+        <HeritageAudioPlayer />
+
         {/* Footer */}
         <footer className="border-t border-[#cba369]/30 bg-[#100b08]/90 backdrop-blur-md py-6 mt-12 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#d5c3aa]">
             <div>
-              <span className="text-white font-semibold">Việt Phục Remix</span> — Nền tảng thời trang học sinh, sinh viên.
+              <span className="text-white font-semibold">Việt Phục Remix</span> — Mặc chất Gen Z, Hiểu đúng Cổ phục Việt Nam.
             </div>
-            <div className="flex items-center space-x-4">
-              <span>Model: <code className="text-[#f5d99f] font-mono">models/gemini-3.8-flash</code></span>
+            <div className="flex items-center space-x-3 text-stone-400">
+              <span>Áo Dài</span>
               <span>•</span>
-              <span>Schema v1.0</span>
+              <span>Áo Ngũ Thân</span>
+              <span>•</span>
+              <span>Áo Tứ Thân</span>
               <span>•</span>
               <span className="text-[#d4af37] font-medium">Bảo Tồn & Sáng Tạo Di Sản</span>
             </div>
