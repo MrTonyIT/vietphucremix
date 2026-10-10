@@ -160,7 +160,7 @@ export const FengShuiAnalyzerModal: React.FC<FengShuiAnalyzerModalProps> = ({
   }, [currentItems, targetElement, elementDetails, currentFate, activeEntityName]);
 
   const handleCopyBlessing = () => {
-    const textToCopy = `[Phong Thủy Cổ Phục - Việt Phục Remix]\nBản mệnh: ${currentFate.canChi} (${currentFate.fateName})\nTrang phục: ${activeEntityName}\nĐiểm Vượng Khí: ${analysis.score}/100\nLời chúc cát tường: "${analysis.blessingContent}"`;
+    const textToCopy = `[Phong Thủy Cổ Phục - Việt Y Tân Sắc]\nBản mệnh: ${currentFate.canChi} (${currentFate.fateName})\nTrang phục: ${activeEntityName}\nĐiểm Vượng Khí: ${analysis.score}/100\nLời chúc cát tường: "${analysis.blessingContent}"`;
     navigator.clipboard.writeText(textToCopy);
     setCopiedBlessing(true);
     setTimeout(() => setCopiedBlessing(false), 2500);

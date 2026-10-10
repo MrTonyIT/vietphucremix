@@ -141,6 +141,8 @@ export const OutfitRecipeSchema = z.object({
   description: z.string(),
   matchScore: z.number().min(0).max(100),
   colorHarmony: z.string(),
+  items: z.record(z.string(), CatalogItemSchema).optional(),
+  culture: CultureContextSchema.optional(),
 });
 
 export type OutfitRecipe = z.infer<typeof OutfitRecipeSchema>;

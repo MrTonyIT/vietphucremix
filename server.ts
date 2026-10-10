@@ -195,10 +195,59 @@ const CompareRequestSchema = z.object({
   }).optional(),
 });
 
+// Helper: Normalize Vietnamese diacritics for robust intent & slot matching
+export function removeVietnameseDiacritics(str: string): string {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .trim();
+}
+
+// Helper: Map user or Gemini raw strings (e.g. 'shoes', 'giày', 'hat', 'nón') to valid SlotType
+export function normalizeSlotName(raw: unknown): SlotType | undefined {
+  if (!raw) return undefined;
+  const s = removeVietnameseDiacritics(String(raw));
+  if (
+    ['footwear', 'shoes', 'shoe', 'giay', 'hai', 'guoc', 'dep', 'sneaker', 'boots', 'sandals', 'foot', 'feet'].some(
+      (k) => s.includes(k)
+    )
+  ) {
+    return 'footwear';
+  }
+  if (['headwear', 'head', 'hat', 'cap', 'non', 'mu', 'khan', 'khan van', 'man'].some((k) => s.includes(k))) {
+    return 'headwear';
+  }
+  if (
+    ['accessory', 'accessories', 'acc', 'phu kien', 'quat', 'tui', 'kieng', 'vong', 'fan', 'bag', 'jewelry'].some(
+      (k) => s.includes(k)
+    )
+  ) {
+    return 'accessory';
+  }
+  if (['inner', 'yem', 'ao lot', 'ao yem', 'camisole', 'bra'].some((k) => s.includes(k))) {
+    return 'inner';
+  }
+  if (['lower', 'bottom', 'pants', 'quan', 'vay', 'dam', 'skirt', 'trousers'].some((k) => s.includes(k))) {
+    return 'lower';
+  }
+  if (
+    ['main', 'ao', 'ao chinh', 'ao dai', 'ngu than', 'tu than', 'coat', 'top', 'shirt', 'dress'].some((k) =>
+      s.includes(k)
+    )
+  ) {
+    return 'main';
+  }
+  return undefined;
+}
+
 // Tool Argument Schemas (Validated with Zod at execution boundary)
 const SwapOutfitItemArgsSchema = z.object({
   targetSlot: z.preprocess(
-    (val) => String(val || '').trim().toLowerCase(),
+    (val) => normalizeSlotName(val) || String(val || '').trim().toLowerCase(),
     z.enum(['main', 'lower', 'inner', 'headwear', 'footwear', 'accessory'])
   ),
   desiredStyleOrColor: z.string().max(100).optional(),
@@ -264,17 +313,17 @@ const recommendOutfitsDeclaration: FunctionDeclaration = {
 
 const swapOutfitItemDeclaration: FunctionDeclaration = {
   name: 'swap_outfit_item',
-  description: 'Đổi đúng MỘT món đồ trong trang phục hiện tại tại vị trí slot chỉ định (ví dụ đổi giày, nón, phụ kiện), trong khi giữ nguyên 100% tất cả các món đồ ở các vị trí khác.',
+  description: 'Đổi đúng MỘT món đồ trong trang phục hiện tại tại vị trí slot chỉ định (giày/hài, nón/mũ, phụ kiện, quần/váy, áo chính, áo lót/yếm), trong khi giữ nguyên 100% tất cả các món đồ ở các vị trí khác.',
   parameters: {
     type: Type.OBJECT,
     properties: {
       targetSlot: {
         type: Type.STRING,
-        description: 'Vị trí slot muốn đổi: main, lower, inner, headwear, footwear, accessory',
+        description: 'Vị trí slot muốn đổi: footwear (giày/hài/guốc/sneaker), headwear (nón lá/khăn vấn/mũ), accessory (quạt/túi/kiềng), lower (quần/váy), main (áo chính), inner (áo yếm)',
       },
       desiredStyleOrColor: {
         type: Type.STRING,
-        description: 'Mô tả màu sắc hoặc phong cách mong muốn cho món mới (ví dụ: sneaker, hài thêu sen, nón lá, túi cói, trẻ trung, năng động)',
+        description: 'Mô tả màu sắc hoặc phong cách mong muốn cho món mới (ví dụ: sneaker canvas trắng, hài thêu sen, nón lá bài thơ, trẻ trung, năng động, thanh lịch)',
       },
     },
     required: ['targetSlot'],
@@ -300,7 +349,7 @@ const getCultureContextDeclaration: FunctionDeclaration = {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    app: 'Việt Phục Remix',
+    app: 'Việt Y Tân Sắc',
     checkpoint: 'Checkpoint 4 — Lookbook, So sánh & Hoàn thiện',
     geminiModel: GEMINI_MODEL,
     hasApiKey: Boolean(GEMINI_API_KEY),
@@ -1176,21 +1225,62 @@ app.post('/api/chat', async (req, res) => {
           };
         }
 
-        // Rank candidates by desired style/color preference
+        // Rank candidates by desired style/color preference with diacritics insensitivity
         const targetQuery = (desiredStyleOrColor || '').toLowerCase();
+        const normTarget = removeVietnameseDiacritics(targetQuery);
         const ranked = [...candidates].sort((a, b) => {
           let scoreA = 0;
           let scoreB = 0;
-          if (targetQuery) {
-            if (a.name.toLowerCase().includes(targetQuery)) scoreA += 5;
-            if (b.name.toLowerCase().includes(targetQuery)) scoreB += 5;
-            if (a.colorName.toLowerCase().includes(targetQuery)) scoreA += 4;
-            if (b.colorName.toLowerCase().includes(targetQuery)) scoreB += 4;
-            if (a.styleTags.some((t) => targetQuery.includes(t.toLowerCase()))) scoreA += 3;
-            if (b.styleTags.some((t) => targetQuery.includes(t.toLowerCase()))) scoreB += 3;
-            if (targetQuery.includes('remix') && a.isModern) scoreA += 4;
-            if (targetQuery.includes('remix') && b.isModern) scoreB += 4;
+
+          const normNameA = removeVietnameseDiacritics(a.name);
+          const normNameB = removeVietnameseDiacritics(b.name);
+          const normColorA = removeVietnameseDiacritics(a.colorName);
+          const normColorB = removeVietnameseDiacritics(b.colorName);
+
+          if (normTarget) {
+            // Direct name matches
+            if (normNameA.includes(normTarget) || normTarget.includes(normNameA)) scoreA += 10;
+            if (normNameB.includes(normTarget) || normTarget.includes(normNameB)) scoreB += 10;
+
+            // Direct color matches
+            if (normColorA.includes(normTarget) || normTarget.includes(normColorA)) scoreA += 8;
+            if (normColorB.includes(normTarget) || normTarget.includes(normColorB)) scoreB += 8;
+
+            // Style tag matches
+            for (const tag of a.styleTags) {
+              if (normTarget.includes(removeVietnameseDiacritics(tag))) scoreA += 5;
+            }
+            for (const tag of b.styleTags) {
+              if (normTarget.includes(removeVietnameseDiacritics(tag))) scoreB += 5;
+            }
+
+            // Modern / Remix intent
+            const wantsModern = ['remix', 'sneaker', 'tre trung', 'nang dong', 'hien dai', 'gen z'].some((k) =>
+              normTarget.includes(k)
+            );
+            if (wantsModern) {
+              if (a.isModern) scoreA += 12;
+              if (b.isModern) scoreB += 12;
+            }
+
+            // Traditional intent
+            const wantsTrad = ['truyen thong', 'co dien', 'hai theu', 'guoc moc', 'trang nghiem', 'le nghi'].some((k) =>
+              normTarget.includes(k)
+            );
+            if (wantsTrad) {
+              if (!a.isModern) scoreA += 12;
+              if (!b.isModern) scoreB += 12;
+            }
+
+            // If user explicitly asks for something different ('khac'), contrast with current item
+            if (normTarget.includes('khac') && currentSlotItem) {
+              if (a.isModern !== currentSlotItem.isModern) scoreA += 6;
+              if (b.isModern !== currentSlotItem.isModern) scoreB += 6;
+              if (a.colorName !== currentSlotItem.colorName) scoreA += 4;
+              if (b.colorName !== currentSlotItem.colorName) scoreB += 4;
+            }
           }
+
           return scoreB - scoreA;
         });
 
@@ -1456,11 +1546,31 @@ QUY TẮC BẮT BUỘC:
             ];
           }
 
-          finalResponse = (await activeClient.models.generateContent({
-            model: GEMINI_MODEL,
-            contents,
-            config,
-          })) as any;
+          let retryCount = 0;
+          while (true) {
+            try {
+              finalResponse = (await activeClient.models.generateContent({
+                model: GEMINI_MODEL,
+                contents,
+                config,
+              })) as any;
+              break;
+            } catch (callErr: any) {
+              const isTransient =
+                callErr?.status === 503 ||
+                callErr?.status === 429 ||
+                callErr?.message?.includes('503') ||
+                callErr?.message?.includes('high demand') ||
+                callErr?.message?.includes('RESOURCE_EXHAUSTED');
+              if (isTransient && retryCount < 2 && !abortController.signal.aborted) {
+                retryCount++;
+                console.log(`[Gemini Assistant] Thử lại (${retryCount}/2) sau sự cố tạm thời:`, callErr?.message || callErr?.status);
+                await new Promise((r) => setTimeout(r, 600 * retryCount));
+                continue;
+              }
+              throw callErr;
+            }
+          }
 
           const candidate = finalResponse?.candidates?.[0];
           const functionCalls = finalResponse?.functionCalls;
@@ -1576,81 +1686,112 @@ QUY TẮC BẮT BUỘC:
     // Local Fallback Reasoning if Gemini unavailable, blocked, or failed
     if (!reply) {
       const msgLower = message.toLowerCase();
+      const normMsg = removeVietnameseDiacritics(message);
 
       // Check if message is a question seeking alternatives (e.g. "Có đôi giày khác không?", "Có mẫu nào khác không?")
-      // Do NOT treat "có ... không" as a negation!
       const isAlternativeQuestion =
-        /(?:có|còn|xem|tìm|thử)\s+.*(?:khác|nào|gì|sao|thêm)\s*(?:không|ko|\?)/i.test(msgLower) ||
-        /^(?:có|còn)\s+.*(?:không|ko|\?)$/i.test(msgLower) ||
-        /(?:có\s+đôi|có\s+mẫu|có\s+chiếc|có\s+món|có\s+áo|có\s+quần|có\s+giày|có\s+nón|có\s+phụ\s+kiện)\s+.*(?:khác|mới)/i.test(msgLower);
+        /(?:có|còn|xem|tìm|thử|cho)\s+.*(?:khác|nào|gì|sao|thêm)\s*(?:không|ko|\?)?/i.test(normMsg) ||
+        /(?:có\s+đôi|có\s+mẫu|có\s+chiếc|có\s+món|có\s+áo|có\s+quần|có\s+giày|có\s+nón|có\s+phụ\s+kiện)\s+.*(?:khác|mới)/i.test(
+          normMsg
+        ) ||
+        normMsg.includes('doi giay khac') ||
+        normMsg.includes('giay khac') ||
+        normMsg.includes('mau khac') ||
+        normMsg.includes('mon khac');
 
       // Check explicit negation (e.g. "không đổi giày nhé", "đừng đổi giày", "chớ thay giày", "giữ nguyên")
       const isExplicitNegation =
         !isAlternativeQuestion &&
-        (/(?:không|đừng|chớ|chẳng|ko|thôi)\s+(?:cần\s+|muốn\s+|nên\s+)?(?:đổi|thay)/i.test(msgLower) ||
-          /(?:không|đừng|chớ|chẳng|ko)\s+(?:đổi|thay)\s+(?:món|áo|quần|váy|yếm|giày|hài|guốc|nón|mũ|khăn|phụ\s+kiện|gì)/i.test(msgLower) ||
-          /(?:giữ\s+nguyên|không\s+thay\s+đổi|đừng\s+thay\s+đổi)/i.test(msgLower) ||
-          /(?:không\s+đổi|đừng\s+đổi|chớ\s+đổi|không\s+thay|đừng\s+thay|chớ\s+thay)/i.test(msgLower));
+        (/(?:không|đừng|chớ|chẳng|ko|thôi)\s+(?:cần\s+|muốn\s+|nên\s+)?(?:đổi|thay)/i.test(normMsg) ||
+          /(?:không|đừng|chớ|chẳng|ko)\s+(?:đổi|thay)\s+(?:món|áo|quần|váy|yếm|giày|hài|guốc|nón|mũ|khăn|phụ\s+kiện|gì)/i.test(
+            normMsg
+          ) ||
+          normMsg.includes('giu nguyen') ||
+          normMsg.includes('khong thay doi') ||
+          normMsg.includes('khong doi') ||
+          normMsg.includes('dung doi'));
 
       if (isExplicitNegation) {
         serverAction = undefined;
-        reply = `[Trợ lý Cục bộ]: Đã ghi nhận! Tôi sẽ giữ nguyên trang phục hiện tại theo ý bạn, không thực hiện thao tác đổi món nào.`;
+        reply = `Đã ghi nhận! Tôi sẽ giữ nguyên trang phục hiện tại theo ý bạn, không thực hiện thao tác đổi món nào.`;
       }
       // 1. Cultural question (Never swap!)
       else if (
-        msgLower.includes('văn hóa') ||
-        msgLower.includes('nguồn gốc') ||
-        msgLower.includes('lịch sử') ||
-        msgLower.includes('ý nghĩa') ||
-        msgLower.includes('sự tích') ||
-        msgLower.includes('tại sao')
+        ['van hoa', 'nguon goc', 'lich su', 'y nghia', 'su tich', 'tai sao', '5 khuy', 'nam khuy', 'yem', 'than con', 'giao linh'].some(
+          (k) => normMsg.includes(k)
+        )
       ) {
-        // Detect if user asks explicitly about another entity than current outfit
         let targetCultureSlug: EntitySlug = activeEntity;
-        if (msgLower.includes('tứ thân') || msgLower.includes('tu than')) {
+        if (normMsg.includes('tu than')) {
           targetCultureSlug = 'tu-than';
-        } else if (msgLower.includes('ngũ thân') || msgLower.includes('ngu thân')) {
+        } else if (normMsg.includes('ngu than')) {
           targetCultureSlug = 'ngu-than';
-        } else if (msgLower.includes('áo dài') || msgLower.includes('ao dai')) {
+        } else if (normMsg.includes('ao dai')) {
           targetCultureSlug = 'ao-dai';
         }
 
         const result = executeToolInternal('get_culture_context', { entitySlug: targetCultureSlug });
         if (result.success) {
-          reply = `[Trợ lý Cục bộ]: Về trang phục ${result.title} (${result.historicalEra}): ${result.sourcedFact}. Nguồn tư liệu: ${result.referenceSource}.`;
+          reply = `Về trang phục ${result.title} (${result.historicalEra}): ${result.sourcedFact}. Nguồn tư liệu: ${result.referenceSource}.`;
         } else {
-          reply = '[Trợ lý Cục bộ]: Dữ liệu văn hóa cho nhóm áo này đang được đối chiếu từ tài liệu Ngàn năm áo mũ và các nguồn sử liệu.';
+          reply = 'Dữ liệu văn hóa cho nhóm áo này đang được đối chiếu từ tài liệu Ngàn năm áo mũ và các nguồn sử liệu chính thống.';
         }
       }
-      // 2. Footwear Swap / Question
+      // 2. Footwear Swap / Question (giày, sneaker, hài, guốc, dép, boots, loafer)
       else if (
-        msgLower.includes('giày') ||
-        msgLower.includes('sneaker') ||
-        msgLower.includes('hài') ||
-        msgLower.includes('guốc')
+        ['giay', 'sneaker', 'hai', 'guoc', 'dep', 'boots', 'loafer', 'chan'].some((k) => normMsg.includes(k)) ||
+        normMsg.includes('doi giay') ||
+        normMsg.includes('thay giay')
       ) {
-        const wantsModern = msgLower.includes('trẻ trung') || msgLower.includes('năng động') || msgLower.includes('remix') || msgLower.includes('sneaker');
+        const wantsModern = ['tre trung', 'nang dong', 'remix', 'sneaker', 'di bo', 'dao pho', 'hien dai'].some((k) =>
+          normMsg.includes(k)
+        );
+        const wantsTrad = ['truyen thong', 'co dien', 'hai theu', 'guoc moc', 'trang nghiem'].some((k) =>
+          normMsg.includes(k)
+        );
+
+        let desiredQuery = message;
+        if (wantsModern) {
+          desiredQuery = 'sneaker canvas remix trẻ trung';
+        } else if (wantsTrad) {
+          desiredQuery = 'hài thêu sen truyền thống cổ phong';
+        } else if (normMsg.includes('khac')) {
+          const currentFootwear = currentItemsList.find((i) => i.slot === 'footwear');
+          desiredQuery = currentFootwear?.isModern
+            ? 'hài thêu sen truyền thống cổ phong'
+            : 'sneaker canvas trắng trẻ trung remix';
+        }
+
         const result = executeToolInternal('swap_outfit_item', {
           targetSlot: 'footwear',
-          desiredStyleOrColor: wantsModern ? 'sneaker remix trẻ trung' : message,
+          desiredStyleOrColor: desiredQuery,
         });
 
         if (result.success && result.swappedItem) {
           serverAction = turnActions[turnActions.length - 1];
           const isModern = result.swappedItem.isModern;
-          reply = `[Trợ lý Cục bộ]: Tôi gợi ý bạn thử "${result.swappedItem.name}" (${result.swappedItem.colorName})${
-            isModern ? ' mang phong cách cách tân (Remix) trẻ trung' : ' mang phong cách thanh lịch truyền thống'
-          }. Các vị trí còn lại trên trang phục được giữ nguyên 100%. Bạn có thể nhấn nút bên dưới để áp dụng!`;
+          reply = `Tôi gợi ý bạn thử phối đôi "${result.swappedItem.name}" (${result.swappedItem.colorName})${
+            isModern
+              ? ' mang phong cách cách tân (Remix) trẻ trung, năng động khi di chuyển'
+              : ' mang nét thanh lịch, đài các chuẩn cổ phong'
+          }. Tất cả các vị trí khác trên trang phục được giữ nguyên 100%. Bạn có thể nhấn nút bên dưới để thử ngay nhé!`;
+
+          aiStylistInsights = {
+            aestheticVibe: isModern ? 'Tân Cổ Giao Duyên (Remix)' : 'Thanh Tân Cổ Phong',
+            stylingTip: isModern
+              ? 'Khi phối sneaker với tà áo truyền thống, bạn có thể bước đi tự nhiên, một tay khẽ nâng nhẹ tà áo sau để tạo sự thanh thoát, phá cách.'
+              : 'Đôi hài/guốc truyền thống tôn lên dáng đi đĩnh đạc, khoan thai; rất đẹp khi chụp ảnh góc toàn thân tại các di tích cổ kính.',
+          };
         } else {
           serverAction = undefined;
-          reply = `[Trợ lý Cục bộ]: ${result.message || 'Hiện chưa tìm thấy giày/hài thay thế phù hợp trong catalog.'}`;
+          reply = `${result.message || 'Hiện chưa tìm thấy giày/hài thay thế phù hợp trong catalog.'}`;
         }
       }
-      // 3. Headwear Swap
+      // 3. Headwear Swap (nón, mũ, khăn)
       else if (
-        msgLower.includes('nón') ||
-        msgLower.includes('mũ') ||
-        msgLower.includes('khăn')
+        ['non', 'mu', 'khan', 'quai thao', 'khan van'].some((k) => normMsg.includes(k)) ||
+        normMsg.includes('doi non') ||
+        normMsg.includes('thay non')
       ) {
         const result = executeToolInternal('swap_outfit_item', {
           targetSlot: 'headwear',
@@ -1659,18 +1800,22 @@ QUY TẮC BẮT BUỘC:
 
         if (result.success && result.swappedItem) {
           serverAction = turnActions[turnActions.length - 1];
-          reply = `[Trợ lý Cục bộ]: Gợi ý cho bạn: "${result.swappedItem.name}". Món này phù hợp với phong thái ${EntityDisplayData[activeEntity]?.name || activeEntity}, giữ nguyên các món khác. Bấm nút bên dưới để áp dụng!`;
+          reply = `Gợi ý đổi nón/khăn cho bạn: "${result.swappedItem.name}". Món này rất ăn ý với phom dáng ${EntityDisplayData[activeEntity]?.name || activeEntity}, giữ nguyên toàn bộ các món khác. Bấm nút bên dưới để áp dụng!`;
+
+          aiStylistInsights = {
+            aestheticVibe: 'Đoan Trang Cố Phong',
+            stylingTip: 'Khi đội nón lá hoặc khăn vấn, hướng cằm nhẹ góc 30 độ để đón ánh sáng tự nhiên, tôn lên đường nét thanh tú của khuôn mặt.',
+          };
         } else {
           serverAction = undefined;
-          reply = `[Trợ lý Cục bộ]: ${result.message || 'Hiện chưa tìm thấy nón/khăn thay thế phù hợp trong catalog.'}`;
+          reply = `${result.message || 'Hiện chưa tìm thấy nón/khăn thay thế phù hợp trong catalog.'}`;
         }
       }
-      // 4. Accessory Swap
+      // 4. Accessory Swap (quạt, túi, kiềng, vòng, phụ kiện)
       else if (
-        msgLower.includes('phụ kiện') ||
-        msgLower.includes('quạt') ||
-        msgLower.includes('túi') ||
-        msgLower.includes('kiềng')
+        ['phu kien', 'quat', 'tui', 'kieng', 'vong'].some((k) => normMsg.includes(k)) ||
+        normMsg.includes('them quat') ||
+        normMsg.includes('doi quat')
       ) {
         const result = executeToolInternal('swap_outfit_item', {
           targetSlot: 'accessory',
@@ -1679,14 +1824,53 @@ QUY TẮC BẮT BUỘC:
 
         if (result.success && result.swappedItem) {
           serverAction = turnActions[turnActions.length - 1];
-          reply = `[Trợ lý Cục bộ]: Tôi gợi ý bạn thêm "${result.swappedItem.name}". Món này tạo điểm nhấn tinh tế khi tạo dáng chụp ảnh. Hãy bấm xác nhận bên dưới nếu bạn thích nhé!`;
+          reply = `Tôi gợi ý bạn thêm phụ kiện "${result.swappedItem.name}". Món này tạo điểm nhấn tinh tế khi tạo dáng chụp ảnh. Hãy bấm xác nhận bên dưới nếu bạn thích nhé!`;
+
+          aiStylistInsights = {
+            aestheticVibe: 'Cốt Cách Nho Nhã',
+            stylingTip: 'Cầm quạt hoặc túi khép hờ ngang thắt lưng, giữ hai vai thả lỏng tự nhiên để tạo phong thái thư thái, tao nhã.',
+          };
         } else {
           serverAction = undefined;
-          reply = `[Trợ lý Cục bộ]: ${result.message || 'Hiện chưa tìm thấy phụ kiện thay thế phù hợp trong catalog.'}`;
+          reply = `${result.message || 'Hiện chưa tìm thấy phụ kiện thay thế phù hợp trong catalog.'}`;
         }
       }
-      // 5. Outfit Recommendation
-      else if (msgLower.includes('gợi ý') || msgLower.includes('bộ khác') || msgLower.includes('phối bộ')) {
+      // 5. Lower Swap (quần, váy)
+      else if (['quan', 'vay', 'dam'].some((k) => normMsg.includes(k)) && (normMsg.includes('doi') || normMsg.includes('thay') || normMsg.includes('khac'))) {
+        const result = executeToolInternal('swap_outfit_item', {
+          targetSlot: 'lower',
+          desiredStyleOrColor: message,
+        });
+
+        if (result.success && result.swappedItem) {
+          serverAction = turnActions[turnActions.length - 1];
+          reply = `Gợi ý đổi phần mặc dưới: "${result.swappedItem.name}" (${result.swappedItem.colorName}). Giữ nguyên áo chính và phụ kiện đi kèm. Bấm nút bên dưới để thử nhé!`;
+        } else {
+          serverAction = undefined;
+          reply = `${result.message || 'Hiện chưa tìm thấy quần/váy thay thế phù hợp trong catalog.'}`;
+        }
+      }
+      // 6. Main Coat Swap (áo chính, đổi áo, áo khác)
+      else if (['doi ao', 'thay ao', 'ao khac', 'mau ao'].some((k) => normMsg.includes(k))) {
+        const result = executeToolInternal('swap_outfit_item', {
+          targetSlot: 'main',
+          desiredStyleOrColor: message,
+        });
+
+        if (result.success && result.swappedItem) {
+          serverAction = turnActions[turnActions.length - 1];
+          reply = `Tôi gợi ý bạn đổi sang áo chính "${result.swappedItem.name}" (${result.swappedItem.colorName}). Bấm nút bên dưới để áp dụng mẫu áo này!`;
+        } else {
+          serverAction = undefined;
+          reply = `${result.message || 'Hiện chưa tìm thấy áo thay thế phù hợp trong catalog.'}`;
+        }
+      }
+      // 7. Outfit Recommendation (gợi ý bộ, phối bộ mới)
+      else if (
+        ['goi y', 'bo khac', 'phoi bo', 'mac gi', 'ky yeu', 'le hoi', 'dao pho', 'chup anh'].some((k) =>
+          normMsg.includes(k)
+        )
+      ) {
         const result = executeToolInternal('recommend_outfits', {
           event,
           entitySlug: activeEntity,
@@ -1696,16 +1880,16 @@ QUY TẮC BẮT BUỘC:
 
         if (result.success) {
           serverAction = turnActions[turnActions.length - 1];
-          reply = `[Trợ lý Cục bộ]: Dựa trên bối cảnh ${event} và nhóm ${EntityDisplayData[activeEntity]?.name || activeEntity}, tôi gợi ý công thức "${result.recipeName}" đạt ${result.matchScore}% độ khớp tiêu chí. Hòa sắc: ${result.colorHarmony}.`;
+          reply = `Dựa trên bối cảnh ${event} và nhóm ${EntityDisplayData[activeEntity]?.name || activeEntity}, tôi gợi ý công thức "${result.recipeName}" đạt ${result.matchScore}% độ khớp tiêu chí. Hòa sắc: ${result.colorHarmony}.`;
         } else {
           serverAction = undefined;
-          reply = `[Trợ lý Cục bộ]: ${result.message || 'Không tìm thấy bộ phối phù hợp.'}`;
+          reply = `${result.message || 'Không tìm thấy bộ phối phù hợp.'}`;
         }
       }
-      // 6. Default greeting
+      // 8. Default friendly greeting
       else {
         serverAction = undefined;
-        reply = `[Trợ lý Cục bộ]: Xin chào! Tôi là Trợ lý Thời trang Việt Phục Remix (chế độ Cục bộ). Bạn có thể yêu cầu tôi đổi giày/hài năng động hơn, đổi nón lá, thêm quạt cầm tay hoặc hỏi về câu chuyện văn hóa của bộ ${EntityDisplayData[activeEntity]?.name || activeEntity} đang mặc nhé!`;
+        reply = `Xin chào! Tôi là Trợ lý Thời trang Việt Phục Remix. Bạn có thể yêu cầu tôi đổi giày/sneaker năng động hơn, đổi nón lá/khăn vấn, thêm quạt cầm tay, hoặc hỏi về nguồn gốc lịch sử của bộ ${EntityDisplayData[activeEntity]?.name || activeEntity} đang mặc nhé!`;
       }
     }
 

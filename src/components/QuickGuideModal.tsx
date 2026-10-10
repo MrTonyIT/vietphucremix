@@ -122,7 +122,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                   id="quick-guide-title"
                   className="text-lg sm:text-xl font-bold font-serif text-white tracking-wide leading-tight"
                 >
-                  Hướng Dẫn Nhanh Việt Phục Remix
+                  Hướng Dẫn Nhanh Việt Y Tân Sắc
                 </h2>
                 <p className="text-xs text-[#e5ceb5] mt-0.5">
                   3 tính năng cốt lõi giúp bạn phối đồ chuẩn xác và sáng tạo

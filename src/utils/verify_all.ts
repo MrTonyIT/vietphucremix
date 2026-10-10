@@ -1,5 +1,5 @@
 /**
- * Automated Verification Script for Việt Phục Remix
+ * Automated Verification Script for Việt Y Tân Sắc
  * Tests:
  * 1. Server validation endpoints (/api/swap-item, /api/recommend, /api/compare, /api/chat)
  * 2. Stale responses, negation handling ("không đổi giày"), explicit culture query routing

@@ -46,7 +46,7 @@ export const LookbookModal: React.FC<LookbookModalProps> = ({
       .map(([slot, item]) => `  • ${slot.toUpperCase()}: ${item.name} (${item.colorName})`)
       .join('\n');
 
-    const shareText = `✨ Việt Phục Remix — Bộ Phối: ${entry.name}\n` +
+    const shareText = `✨ Việt Y Tân Sắc — Bộ Phối: ${entry.name}\n` +
       `🎎 Nhóm trang phục: ${EntityDisplayData[entry.entitySlug]?.name || entry.entitySlug}\n` +
       (entry.sceneName ? `🏛️ Bối cảnh: ${entry.sceneName}\n` : '') +
       (entry.colorHarmony ? `🎨 Hài hòa màu: ${entry.colorHarmony}\n` : '') +

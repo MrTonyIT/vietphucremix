@@ -34,7 +34,8 @@ import {
   Award,
   Crown,
 } from 'lucide-react';
-import { OutfitVisualizer } from './components/OutfitVisualizer';
+import { OutfitVisualizer, CharacterOutfitCanvas } from './components/OutfitVisualizer';
+import { OutfitAuraPanel } from './components/OutfitAuraPanel';
 import { InspirationResultData } from './components/InspirationSceneVisualizer';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { CandidateOutfit } from './components/RecommendationsModal';
@@ -186,8 +187,20 @@ export default function App() {
   const [showPoseGuideModal, setShowPoseGuideModal] = useState<boolean>(false);
   const [showDynastyModal, setShowDynastyModal] = useState<boolean>(false);
   const [isHeritageMenuOpen, setIsHeritageMenuOpen] = useState<boolean>(false);
-  const [mainView, setMainView] = useState<'studio' | 'heritage' | 'recipes'>('studio');
+  const [mainView, setMainView] = useState<'studio' | 'recipes' | 'heritage'>('studio');
   const [recipeFilterSlug, setRecipeFilterSlug] = useState<EntitySlug | 'all'>('all');
+
+  // Chuyển chế độ hiển thị mượt mà và cuộn lên đầu trang
+  const switchView = useCallback((view: 'studio' | 'recipes' | 'heritage') => {
+    setMainView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const scrollToSection = useCallback((sectionId: string) => {
+    const view = sectionId === 'bo-mau-san' ? 'recipes' : sectionId === 'bach-khoa-di-san' ? 'heritage' : 'studio';
+    setMainView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
   const [lookbookEntries, setLookbookEntries] = useState<LookbookEntry[]>([]);
   const [showRecModal, setShowRecModal] = useState<boolean>(false);
   const [candidates, setCandidates] = useState<CandidateOutfit[]>([]);
@@ -210,7 +223,7 @@ export default function App() {
     }
     setCurrentItems(newItems);
     setLockedSlots([]);
-    setMainView('studio');
+    scrollToSection('phong-phoi-do');
     showToast(`Đã áp dụng thành công bộ đồ vào bàn làm việc!`, 'success');
   };
 
@@ -316,7 +329,7 @@ export default function App() {
         ]);
 
         if (!outfitsRes.ok || !catalogRes.ok) {
-          throw new Error('Không thể kết nối đến máy chủ API Việt Phục Remix');
+          throw new Error('Không thể kết nối đến máy chủ API Việt Y Tân Sắc');
         }
 
         const outfitsData = await outfitsRes.json();
@@ -447,7 +460,6 @@ export default function App() {
 
   // Switch Entity Group
   const handleSelectGroup = (slug: EntitySlug) => {
-    setMainView('studio');
     requestSeqRef.current += 1;
     const targetRecipe = recipes.find((r) => r.entitySlug === slug);
     if (!targetRecipe) return;
@@ -463,11 +475,11 @@ export default function App() {
       sourceDesc: `nhóm ${EntityDisplayData[slug].name}`,
       skipLockPreservation: false,
     });
+    scrollToSection('phong-phoi-do');
   };
 
   // Reset to default recipe
   const handleResetOutfit = () => {
-    setMainView('studio');
     requestSeqRef.current += 1;
     const targetRecipe = recipes.find((r) => r.entitySlug === selectedSlug);
     if (!targetRecipe) return;
@@ -483,15 +495,19 @@ export default function App() {
       sourceDesc: `bộ gốc ${EntityDisplayData[selectedSlug].name}`,
       skipLockPreservation: true,
     });
+    scrollToSection('phong-phoi-do');
   };
 
   // Apply predefined recipe from Preset Bar
   const handleApplyRecipe = (recipe: OutfitRecipe) => {
-    setMainView('studio');
     const itemsMap: Partial<Record<SlotType, CatalogItem>> = {};
-    for (const [slot, itemId] of Object.entries(recipe.defaultItemIds)) {
-      const item = catalogItems.find((c) => c.id === itemId);
-      if (item) itemsMap[slot as SlotType] = item;
+    if (recipe.items && Object.keys(recipe.items).length > 0) {
+      Object.assign(itemsMap, recipe.items);
+    } else if (recipe.defaultItemIds) {
+      for (const [slot, itemId] of Object.entries(recipe.defaultItemIds)) {
+        const item = catalogItems.find((c) => c.id === itemId);
+        if (item) itemsMap[slot as SlotType] = item;
+      }
     }
     setSelectedSlug(recipe.entitySlug);
     applyOutfitCommit(itemsMap, {
@@ -499,6 +515,7 @@ export default function App() {
       sourceDesc: `bộ phối "${recipe.recipeName}"`,
       skipLockPreservation: true,
     });
+    switchView('studio');
   };
 
   // Single-slot Swap
@@ -846,19 +863,19 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-base sm:text-lg font-bold tracking-tight text-white font-serif leading-tight">
-                  Việt Phục Remix
+                  Việt Y Tân Sắc
                 </h1>
                 <p className="text-[11px] sm:text-xs text-[#e5ceb5] hidden sm:block">
-                  Mặc chất Gen Z — Hiểu đúng Việt phục
+                  Mặc chất Gen Z — Hiểu đúng Cổ phục
                 </p>
               </div>
             </div>
 
-            {/* Center Navigation Tabs: Phòng Phối Đồ | Bách Khoa Di Sản | Bộ Mẫu Sẵn */}
+            {/* Center Navigation Tabs: Phòng Phối Đồ | Bộ Mẫu Sẵn | Bách Khoa Di Sản */}
             <nav className="flex items-center p-1 rounded-2xl bg-[#1b130e]/95 border border-[#cba369]/35 shadow-inner order-last md:order-none w-full md:w-auto justify-center">
               <button
                 type="button"
-                onClick={() => setMainView('studio')}
+                onClick={() => switchView('studio')}
                 className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                   mainView === 'studio'
                     ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md border border-amber-400/50'
@@ -871,20 +888,7 @@ export default function App() {
 
               <button
                 type="button"
-                onClick={() => setMainView('heritage')}
-                className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
-                  mainView === 'heritage'
-                    ? 'bg-gradient-to-r from-purple-800 to-amber-700 text-white shadow-md border border-amber-400/50'
-                    : 'text-[#d5c3aa] hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>🏛️</span>
-                <span>Bách Khoa Di Sản</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMainView('recipes')}
+                onClick={() => switchView('recipes')}
                 className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                   mainView === 'recipes'
                     ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md border border-amber-400/50'
@@ -894,6 +898,19 @@ export default function App() {
                 <span>✨</span>
                 <span>Bộ Mẫu Sẵn</span>
                 <span className="text-[10px] opacity-75 font-mono">({recipes.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchView('heritage')}
+                className={`min-h-[38px] py-1.5 px-3 sm:px-3.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  mainView === 'heritage'
+                    ? 'bg-gradient-to-r from-purple-800 to-amber-700 text-white shadow-md border border-amber-400/50'
+                    : 'text-[#d5c3aa] hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span>🏛️</span>
+                <span>Bách Khoa Di Sản</span>
               </button>
             </nav>
 
@@ -1009,11 +1026,11 @@ export default function App() {
             </div>
           )}
 
-          {/* VIEW 1: STUDIO (Phòng Phối Đồ) */}
+          {/* PHÂN VÙNG 1: PHÒNG PHỐI ĐỒ (Studio & Hình ảnh đồ đã phối) */}
           {mainView === 'studio' && (
-            <>
-              {/* Builder Customization Bar - Refined, Spacious, Uncluttered */}
-              <section className="bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4">
+            <div id="phong-phoi-do" className="space-y-6 animate-in fade-in duration-200">
+            {/* Builder Customization Bar - Refined, Spacious, Uncluttered */}
+            <section className="bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#cba369]/20 pb-3">
                   <div className="flex items-center space-x-2.5">
                     <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
@@ -1048,7 +1065,7 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setMainView('heritage')}
+                      onClick={() => scrollToSection('bach-khoa-di-san')}
                       className="px-3 py-1.5 rounded-xl bg-[#1b1420] hover:bg-[#2a1e32] border border-purple-500/40 text-purple-200 font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
                       title="Mở Bách Khoa Di Sản & Các Tiện Ích"
                     >
@@ -1319,6 +1336,15 @@ export default function App() {
                   />
                 </Suspense>
               )}
+
+              {/* Bảng Hòa Sắc & Giám Định Khí Chất Cổ Phong (Lấp đầy không gian bên trái cực chất) */}
+              <OutfitAuraPanel
+                entitySlug={selectedSlug}
+                items={currentItems}
+                onOpenFengShui={() => setShowFengShuiModal(true)}
+                onOpenSpotRadar={() => setShowSpotRadarModal(true)}
+                onOpenPoseGuide={() => setShowPoseGuideModal(true)}
+              />
             </div>
 
             {/* Right Column: Interactive Slot Controls & Culture Card (7 Cols) */}
@@ -1529,60 +1555,62 @@ export default function App() {
             </div>
           </div>
 
-          {/* Bottom Calm Exploration Gateways */}
-          <section className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              onClick={() => setMainView('heritage')}
-              className="p-5 rounded-3xl bg-gradient-to-br from-[#201510] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl cursor-pointer group flex items-center justify-between gap-4"
-            >
-              <div className="space-y-1.5">
-                <div className="flex items-center space-x-2 text-amber-300 font-serif font-bold text-sm sm:text-base">
-                  <span className="text-xl">🏛️</span>
-                  <span>Bách Khoa Cổ Phong & Tiện Ích Di Sản</span>
+            {/* Quick Navigation Gateways to other views */}
+            <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => switchView('recipes')}
+                className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-[#201510] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl cursor-pointer group flex items-center justify-between gap-4 text-left"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2 text-amber-300 font-serif font-bold text-sm sm:text-base">
+                    <span className="text-xl">✨</span>
+                    <span>Khám Phá 16 Bộ Mẫu Sẵn (Xem Hình Phối Đồ)</span>
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    Khám phá 16 bản phối mẫu cung đình và đương đại, chiêm ngưỡng hình ảnh đồ đã phối trực quan và mặc thử 1-chạm.
+                  </p>
                 </div>
-                <p className="text-xs text-stone-300 leading-relaxed">
-                  8 công cụ văn hóa: Phong thủy ngũ hành, radar check-in di tích, cẩm nang dáng chụp, trục thời gian Lý – Nguyễn...
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:translate-x-1 transition-transform">
-                <ChevronRight className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div
-              onClick={() => setMainView('recipes')}
-              className="p-5 rounded-3xl bg-gradient-to-br from-[#201510] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl cursor-pointer group flex items-center justify-between gap-4"
-            >
-              <div className="space-y-1.5">
-                <div className="flex items-center space-x-2 text-amber-300 font-serif font-bold text-sm sm:text-base">
-                  <span className="text-xl">✨</span>
-                  <span>Bộ Sưu Tập Mẫu Sẵn ({recipes.length} Bộ)</span>
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:translate-x-1 transition-transform">
+                  <ChevronRight className="w-5 h-5" />
                 </div>
-                <p className="text-xs text-stone-300 leading-relaxed">
-                  Khám phá các bản phối kinh điển tiêu biểu của các triều đại, thử đồ 1-chạm và mua sắm Shopee tham khảo.
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:translate-x-1 transition-transform">
-                <ChevronRight className="w-5 h-5" />
-              </div>
-            </div>
-          </section>
-        </>
-      )}
+              </button>
 
-      {/* VIEW 2: HERITAGE (Bách Khoa Di Sản) */}
+              <button
+                type="button"
+                onClick={() => switchView('heritage')}
+                className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-[#201510] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/60 transition-all shadow-xl cursor-pointer group flex items-center justify-between gap-4 text-left"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2 text-amber-300 font-serif font-bold text-sm sm:text-base">
+                    <span className="text-xl">🏛️</span>
+                    <span>Mở Bách Khoa Di Sản & 8 Tiện Ích</span>
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    8 công cụ văn hóa: Phong thủy ngũ hành, radar check-in di tích, cẩm nang dáng chụp, dự toán chi phí.
+                  </p>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:translate-x-1 transition-transform">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+      {/* PHÂN VÙNG 2: BÁCH KHOA CỔ PHONG & TIỆN ÍCH DI SẢN */}
       {mainView === 'heritage' && (
-        <div className="space-y-6">
+        <section id="bach-khoa-di-san" className="space-y-6 animate-in fade-in duration-300">
           {/* Top Navigation & Title Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-5 sm:p-6 shadow-2xl">
             <div>
               <button
                 type="button"
-                onClick={() => setMainView('studio')}
+                onClick={() => switchView('studio')}
                 className="text-xs text-amber-300 hover:text-white flex items-center space-x-1 mb-2 transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span>Quay lại Phòng Phối Đồ</span>
+                <span>Quay Lại Phòng Phối Đồ</span>
               </button>
               <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white font-serif flex items-center space-x-2.5">
                 <span className="text-2xl">🏛️</span>
@@ -1595,11 +1623,11 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => setMainView('studio')}
+              onClick={() => switchView('studio')}
               className="self-start sm:self-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
             >
               <span>👘</span>
-              <span>Vào Phòng Phối Đồ</span>
+              <span>Lên Phòng Phối Đồ</span>
             </button>
           </div>
 
@@ -1837,29 +1865,169 @@ export default function App() {
               </button>
             </div>
           </div>
-        </div>
+
+          {/* PHẦN Ở DƯỚI BÁCH KHOA DI SẢN: CẨM NANG & TRA CỨU NHANH TRỰC QUAN */}
+          <div className="space-y-4 pt-4 border-t border-[#cba369]/20">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-bold text-white font-serif flex items-center space-x-2">
+                <span className="text-xl">📜</span>
+                <span>Cẩm Nang Tra Cứu Văn Hóa & Phong Thái Cổ Phong</span>
+              </h3>
+              <span className="text-xs text-amber-300 font-mono">Di Sản Việt Nam</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Box 1: Ngũ Hành & Can Chi */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#1a120d]/80 border border-[#cba369]/25 space-y-3">
+                <div className="flex items-center space-x-2 text-amber-300 font-bold text-sm">
+                  <span>☯️</span>
+                  <span>Ngũ Hành Bản Mệnh & Màu Sắc</span>
+                </div>
+                <div className="space-y-2 text-xs text-stone-300">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
+                    <span className="font-semibold text-white">Mệnh Kim:</span>
+                    <span className="text-stone-300">Trắng ngọc, Vàng rơm, Nâu đất</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
+                    <span className="font-semibold text-white">Mệnh Mộc:</span>
+                    <span className="text-stone-300">Xanh rêu, Xanh lục, Đen tuyền</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
+                    <span className="font-semibold text-white">Mệnh Thủy:</span>
+                    <span className="text-stone-300">Xanh lam, Đen tuyền, Trắng sữa</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
+                    <span className="font-semibold text-white">Mệnh Hỏa:</span>
+                    <span className="text-stone-300">Đỏ thắm, Tím hoa cà, Hồng điều</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-black/30 border border-white/5">
+                    <span className="font-semibold text-white">Mệnh Thổ:</span>
+                    <span className="text-stone-300">Vàng hoàng yến, Nâu gỗ, Đỏ cam</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFengShuiModal(true)}
+                  className="w-full py-2 px-3 rounded-xl bg-amber-600/30 hover:bg-amber-600/50 border border-amber-400/30 text-amber-200 text-xs font-semibold transition-all text-center cursor-pointer"
+                >
+                  Chấm Điểm Ngũ Hành Cho Bộ Đang Mặc →
+                </button>
+              </div>
+
+              {/* Box 2: Tọa Độ Di Tích 3 Miền */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#1a120d]/80 border border-[#cba369]/25 space-y-3">
+                <div className="flex items-center space-x-2 text-emerald-300 font-bold text-sm">
+                  <span>🗺️</span>
+                  <span>Tọa Độ Check-in Đẹp Nhất</span>
+                </div>
+                <div className="space-y-2 text-xs text-stone-300">
+                  <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-0.5">
+                    <div className="flex items-center justify-between font-semibold text-white">
+                      <span>Hoàng Thành Thăng Long (Hà Nội)</span>
+                      <span className="text-[10px] text-emerald-400">07:30 - 09:30</span>
+                    </div>
+                    <p className="text-[11px] text-stone-400">Phù hợp Áo Tấc, Ngũ Thân tay chẽn, Giao Lĩnh cổ điển</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-0.5">
+                    <div className="flex items-center justify-between font-semibold text-white">
+                      <span>Đại Nội Huế & Lăng Tự Đức (Huế)</span>
+                      <span className="text-[10px] text-emerald-400">15:30 - 17:30</span>
+                    </div>
+                    <p className="text-[11px] text-stone-400">Phù hợp Nhật Bình hoàng gia, Áo Tấc tím hoa cà quý phái</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-0.5">
+                    <div className="flex items-center justify-between font-semibold text-white">
+                      <span>Phố Cổ Hội An & Chùa Cầu (Quảng Nam)</span>
+                      <span className="text-[10px] text-emerald-400">16:00 - 18:30</span>
+                    </div>
+                    <p className="text-[11px] text-stone-400">Phù hợp Áo Dài hoa nhí, Áo Dài trắng nón lá bài thơ</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSpotRadarModal(true)}
+                  className="w-full py-2 px-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-400/30 text-emerald-200 text-xs font-semibold transition-all text-center cursor-pointer"
+                >
+                  Mở Radar Toàn Bộ Tọa Độ 3 Miền →
+                </button>
+              </div>
+
+              {/* Box 3: Quy Chuẩn Tư Thế & Phong Thái */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#1a120d]/80 border border-[#cba369]/25 space-y-3">
+                <div className="flex items-center space-x-2 text-purple-300 font-bold text-sm">
+                  <span>🪭</span>
+                  <span>4 Cốt Cách Tạo Dáng Chuẩn</span>
+                </div>
+                <div className="space-y-2 text-xs text-stone-300">
+                  <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-0.5">
+                    <span className="font-semibold text-white">1. Thanh Nhã (Nữ tú Áo Dài / Tứ Thân):</span>
+                    <p className="text-[11px] text-stone-400">Tay khép nhẹ nâng vạt, đầu nghiêng 15 độ, quạt che e ấp nửa bờ môi.</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-0.5">
+                    <span className="font-semibold text-white">2. Đĩnh Đạc (Nam nhi Ngũ Thân / Áo Tấc):</span>
+                    <p className="text-[11px] text-stone-400">Lưng thẳng, hai tay chắp trước bụng hoặc tay cầm sách/quạt mộc trầm tư.</p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-0.5">
+                    <span className="font-semibold text-white">3. Tương Kính (Cặp đôi kỷ yếu):</span>
+                    <p className="text-[11px] text-stone-400">Nam che dù giấy dầu, Nữ nâng tà sánh bước, ánh nhìn tương tác tự nhiên.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPoseGuideModal(true)}
+                  className="w-full py-2 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/30 text-purple-200 text-xs font-semibold transition-all text-center cursor-pointer"
+                >
+                  Xem Toàn Bộ Cẩm Nang Tạo Dáng →
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Action Footer inside Heritage */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-[#140e0a] border border-[#cba369]/30">
+              <div className="text-xs text-[#d5c3aa]">
+                Sẵn sàng áp dụng kiến thức vào thực tế? Khám phá 16 bộ mẫu phối sẵn hoặc thiết kế ngay trong phòng phối đồ.
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => switchView('recipes')}
+                  className="px-4 py-2 rounded-xl bg-[#261912] hover:bg-[#382419] border border-amber-500/40 text-amber-200 text-xs font-semibold transition-all cursor-pointer"
+                >
+                  ✨ Xem 16 Bộ Mẫu Sẵn
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchView('studio')}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+                >
+                  👘 Lên Phòng Phối Đồ
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
-      {/* VIEW 3: RECIPES (Bộ Mẫu Sẵn) */}
+      {/* PHÂN VÙNG 3: BỘ SƯU TẬP PHỐI SẴN */}
       {mainView === 'recipes' && (
-        <div className="space-y-6">
+        <section id="bo-mau-san" className="space-y-6 animate-in fade-in duration-300">
           {/* Header & Filter */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#16110d]/85 backdrop-blur-md border border-[#cba369]/30 rounded-3xl p-5 sm:p-6 shadow-2xl">
             <div>
               <button
                 type="button"
-                onClick={() => setMainView('studio')}
+                onClick={() => switchView('studio')}
                 className="text-xs text-amber-300 hover:text-white flex items-center space-x-1 mb-2 transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span>Quay lại Phòng Phối Đồ</span>
+                <span>Quay Lại Phòng Phối Đồ</span>
               </button>
               <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-white font-serif flex items-center space-x-2.5">
                 <span className="text-2xl">✨</span>
-                <span>Bộ Sưu Tập Phối Sẵn ({recipes.length} Bộ Mẫu)</span>
+                <span>Bộ Sưu Tập Phối Sẵn ({recipes.length} Bản Phối Mẫu)</span>
               </h2>
               <p className="text-xs sm:text-sm text-[#d5c3aa] mt-1 leading-relaxed">
-                Các bản phối hoàn chỉnh được nghiên cứu theo điển chế lịch sử và thẩm mỹ đương đại. Bấm &quot;Mặc thử ngay&quot; để nạp trực tiếp vào phòng phối đồ.
+                Các bản phối hoàn chỉnh được nghiên cứu theo điển chế lịch sử và thẩm mỹ đương đại. Bấm &quot;Mặc Thử Vào Phòng Phối Đồ&quot; để nạp trực tiếp vào người mẫu.
               </p>
             </div>
 
@@ -1913,40 +2081,85 @@ export default function App() {
           </div>
 
           {/* Recipes Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {recipes
               .filter((rec) => recipeFilterSlug === 'all' || rec.entitySlug === recipeFilterSlug)
               .map((rec) => {
-                const mainItemId = rec.defaultItemIds.main;
+                const mainItemId = rec.defaultItemIds?.main;
                 const mainItem = catalogItems.find((c) => c.id === mainItemId);
                 const display = EntityDisplayData[rec.entitySlug];
+
+                // Build complete items map for visual outfit preview
+                const recipeItemsMap: Partial<Record<SlotType, CatalogItem>> = { ...(rec.items || {}) };
+                if (rec.defaultItemIds) {
+                  for (const [slot, id] of Object.entries(rec.defaultItemIds)) {
+                    if (!recipeItemsMap[slot as SlotType]) {
+                      const it = catalogItems.find((c) => c.id === id);
+                      if (it) recipeItemsMap[slot as SlotType] = it;
+                    }
+                  }
+                }
 
                 return (
                   <div
                     key={rec.id}
-                    className="p-5 rounded-3xl bg-gradient-to-b from-[#20150f] to-[#140e0a] border border-[#cba369]/25 hover:border-amber-400/60 transition-all shadow-xl flex flex-col justify-between space-y-4 group"
+                    className="p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-[#20150f] to-[#140e0a] border border-[#cba369]/30 hover:border-amber-400/70 transition-all shadow-xl flex flex-col justify-between space-y-4 group"
                   >
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#cba369]/20 text-amber-300 font-medium border border-[#cba369]/35">
+                    <div className="space-y-3">
+                      {/* HÌNH ẢNH ĐỒ ĐÃ PHỐI (Visual Canvas Preview) */}
+                      <div className="w-full h-72 sm:h-80 rounded-2xl bg-gradient-to-b from-[#18110b] to-[#0d0805] border border-[#cba369]/25 p-3 flex items-center justify-center relative overflow-hidden group-hover:border-amber-400/50 transition-all shadow-inner">
+                        <CharacterOutfitCanvas
+                          entitySlug={rec.entitySlug}
+                          items={recipeItemsMap}
+                          instanceId={`recipe-card-${rec.id}`}
+                          gender={selectedGender}
+                          ageGroup={selectedAgeGroup}
+                          className="h-full w-auto object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.85)]"
+                        />
+                        {/* Badge phom dáng */}
+                        <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-xl bg-stone-900/90 backdrop-blur-sm border border-[#cba369]/40 text-[11px] text-amber-300 font-serif font-bold shadow-md">
                           {display?.name || rec.entitySlug}
-                        </span>
-                        <span className="text-[#d4af37] font-bold font-mono">
-                          {rec.matchScore}% điểm hòa sắc
-                        </span>
+                        </div>
+                        {/* Badge điểm hòa sắc */}
+                        <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-xl bg-amber-950/85 backdrop-blur-sm border border-amber-500/40 text-[11px] text-[#f5d99f] font-mono font-bold shadow-md">
+                          {rec.matchScore}% hòa sắc
+                        </div>
                       </div>
 
-                      <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
-                        {rec.recipeName}
-                      </h3>
-
-                      <p className="text-xs text-[#dfd3c3] leading-relaxed line-clamp-3">
-                        {rec.description}
-                      </p>
-
-                      <div className="text-[11px] text-amber-400/90 italic">
-                        {rec.colorHarmony}
+                      <div className="space-y-1.5">
+                        <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors font-serif">
+                          {rec.recipeName}
+                        </h3>
+                        <p className="text-xs text-[#dfd3c3] leading-relaxed line-clamp-2">
+                          {rec.description}
+                        </p>
+                        <div className="text-[11px] text-amber-400/90 italic">
+                          {rec.colorHarmony}
+                        </div>
                       </div>
+
+                      {/* Mini Preview Các Món Đã Phối Kèm Bảng Màu */}
+                      {rec.defaultItemIds && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                          {Object.entries(rec.defaultItemIds).map(([slot, itemId]) => {
+                            const itm = catalogItems.find((c) => c.id === itemId) || (rec.items && (rec.items as any)[slot]);
+                            if (!itm) return null;
+                            return (
+                              <div
+                                key={slot}
+                                className="flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#0f0b08]/80 border border-[#cba369]/20 text-[10px]"
+                                title={`${SlotLabels[slot as SlotType]?.vi || slot}: ${itm.name} (${itm.colorName})`}
+                              >
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full border border-white/20 shrink-0 shadow-sm"
+                                  style={{ backgroundColor: itm.hexColor }}
+                                />
+                                <span className="text-[#dfd3c3] truncate max-w-[95px]">{itm.name}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     <div className="pt-3 border-t border-[#cba369]/20 space-y-2">
@@ -1969,9 +2182,32 @@ export default function App() {
                 );
               })}
           </div>
-        </div>
+
+          {/* Quick Action Footer inside Recipes */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-[#140e0a] border border-[#cba369]/30">
+            <div className="text-xs text-[#d5c3aa]">
+              Đã chọn được bộ mẫu ưng ý? Hãy mặc thử vào phòng phối đồ để tùy chỉnh từng món hoặc xuất thẻ danh thiếp.
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => switchView('heritage')}
+                className="px-4 py-2 rounded-xl bg-[#261912] hover:bg-[#382419] border border-amber-500/40 text-amber-200 text-xs font-semibold transition-all cursor-pointer"
+              >
+                🏛️ Mở Bách Khoa Di Sản
+              </button>
+              <button
+                type="button"
+                onClick={() => switchView('studio')}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+              >
+                👘 Lên Phòng Phối Đồ
+              </button>
+            </div>
+          </div>
+        </section>
       )}
-        </main>
+    </main>
 
         {/* Floating Chat Assistant Drawer */}
         <ChatAssistant
@@ -2164,7 +2400,7 @@ export default function App() {
         <footer className="border-t border-[#cba369]/30 bg-[#100b08]/90 backdrop-blur-md py-6 mt-12 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#d5c3aa]">
             <div>
-              <span className="text-white font-semibold">Việt Phục Remix</span> — Mặc chất Gen Z, Hiểu đúng Cổ phục Việt Nam.
+              <span className="text-white font-semibold">Việt Y Tân Sắc</span> — Mặc chất Gen Z, Hiểu đúng Cổ phục Việt Nam.
             </div>
             <div className="flex items-center space-x-3 text-stone-400">
               <span>Áo Dài</span>

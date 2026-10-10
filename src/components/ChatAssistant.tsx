@@ -58,7 +58,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
     {
       id: 'welcome-msg',
       role: 'assistant',
-      text: 'Chào bạn! Mình là Trợ lý Thời trang Việt Phục Remix. Bạn đang phối đồ cho dịp gì? Hãy nhắn cho mình nếu muốn đổi giày trẻ trung hơn, đổi nón hoặc tìm hiểu ý nghĩa cổ phục nhé!',
+      text: 'Chào bạn! Mình là Trợ lý Thời trang Việt Y Tân Sắc. Bạn đang phối đồ cho dịp gì? Hãy nhắn cho mình nếu muốn đổi giày trẻ trung hơn, đổi nón hoặc tìm hiểu ý nghĩa cổ phục nhé!',
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -259,7 +259,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <h3 className="text-xs font-bold text-white font-serif">Trợ Lý Việt Phục Remix</h3>
+                  <h3 className="text-xs font-bold text-white font-serif">Trợ Lý Việt Y Tân Sắc</h3>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 </div>
                 <div className="text-[10px] text-[#d5c3aa] font-mono">
@@ -359,8 +359,9 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({
                           <span>Gemini 3.8 Flash (Gợi ý styling tự do)</span>
                         </span>
                       ) : (
-                        <span className="flex items-center space-x-1 text-stone-400">
-                          <span>Local Fallback Engine</span>
+                        <span className="flex items-center space-x-1 text-[#f5d99f]/80">
+                          <Sparkles className="w-2.5 h-2.5 text-[#d4af37]" />
+                          <span>Stylist AI Cổ Phong (Server-side)</span>
                         </span>
                       )}
                     </div>

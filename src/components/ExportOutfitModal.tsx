@@ -54,7 +54,7 @@ export const ExportOutfitModal: React.FC<ExportOutfitModalProps> = ({
 
   // Tùy biến trên thẻ danh thiếp
   const [cardTheme, setCardTheme] = useState<CardStyleTheme>('lacquer');
-  const [stylistName, setStylistName] = useState<string>('Việt Phục Remix');
+  const [stylistName, setStylistName] = useState<string>('Việt Y Tân Sắc');
   const [customTitle, setCustomTitle] = useState<string>(
     recipeName || outfitName || 'Tuyệt Phẩm Cổ Phục Việt Nam'
   );
@@ -260,7 +260,7 @@ export const ExportOutfitModal: React.FC<ExportOutfitModalProps> = ({
       pdf.setFontSize(7);
       pdf.setTextColor(160, 145, 130);
       pdf.text(
-        `Xuất bản ngày: ${new Date().toLocaleDateString('vi-VN')} • Nền tảng Việt Phục Remix (vietphucremix.vn)`,
+        `Xuất bản ngày: ${new Date().toLocaleDateString('vi-VN')} • Nền tảng Việt Y Tân Sắc (vietytansac.vn)`,
         pageWidth / 2,
         pageHeight - 14,
         { align: 'center' }
@@ -298,7 +298,7 @@ export const ExportOutfitModal: React.FC<ExportOutfitModalProps> = ({
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: customTitle,
-          text: `Chiêm ngưỡng bản phối ${customTitle} trên Việt Phục Remix!`,
+          text: `Chiêm ngưỡng bản phối ${customTitle} trên Việt Y Tân Sắc!`,
           files: [file],
         });
         showToast('Đã mở hộp thoại chia sẻ!');
@@ -434,7 +434,7 @@ export const ExportOutfitModal: React.FC<ExportOutfitModalProps> = ({
                 <div className="relative z-10 text-center mb-3">
                   <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-amber-500/15 border border-amber-500/30 text-amber-400 mb-1">
                     <Sparkles className="w-2.5 h-2.5" />
-                    <span>Việt Phục Remix • Heritage Card</span>
+                    <span>Việt Y Tân Sắc • Heritage Card</span>
                   </div>
                   <h4
                     className={`font-serif font-black text-base sm:text-lg tracking-tight ${
